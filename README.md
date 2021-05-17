@@ -1,3 +1,5 @@
+[![Deploy a cluster with defaults](https://github.com/shiftstack/ci-configs/actions/workflows/deploy-default-cloud.yaml/badge.svg)](https://github.com/shiftstack/ci-configs/actions/workflows/deploy-default-cloud.yaml)
+
 # CI Configs
 
 This repository is used to provision our OpenStack clusters so we can run our OpenShift CI jobs
