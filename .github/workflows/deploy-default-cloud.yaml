@@ -1,0 +1,36 @@
+---
+name: Deploy a cluster with defaults
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+    - configs/default-cloud.yaml
+    - provision.sh
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checks-out the repository under $GITHUB_WORKSPACE
+        uses: actions/checkout@v2
+      - name: Set up Python 3
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install Ansible
+        run: |
+          pip install ansible
+      - name: Install OpenStack Client
+        run: |
+          pip install python-openstackclient
+      - name: Provision the cluster
+        run: |
+          ./provision.sh default-cloud
+        env:
+          IS_CI: true
+          OPENSHIFT_TENANT_PASSWORD: ${{ secrets.OPENSHIFT_TENANT_PASSWORD }}
+          VEXXHOST_ENDPOINT: ${{ secrets.VEXXHOST_ENDPOINT }}
+          VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD: ${{ secrets.VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD }}
+          VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY: ${{ secrets.VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY }}
