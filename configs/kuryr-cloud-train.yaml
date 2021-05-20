@@ -13,3 +13,6 @@ cip_config:
       namespace: quay.io/tripleotraincentos8
       name_prefix: centos-binary-
       tag: current-tripleo
+authorized_keys:
+  - https://github.com/EmilienM.keys
+  - https://github.com/MaysaMacedo.keys

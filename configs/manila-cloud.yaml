@@ -2,3 +2,5 @@ control_plane_ip: 38.102.83.64 # floating IP used for OpenStack endpoints
 manila_enabled: true
 ceph_devices:
   - /dev/sdc
+authorized_keys:
+  - https://github.com/mandre.keys
