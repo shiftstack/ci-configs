@@ -2,13 +2,11 @@
 name: Deploy a cluster with defaults
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-    - configs/default-cloud.yaml
-    - provision.sh
-
+  # Our quotas in Github actions is low, so we can't run this job
+  # for each PR.
+  release:
+    types:
+      - created
 jobs:
   build:
     runs-on: ubuntu-latest
