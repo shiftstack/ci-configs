@@ -49,7 +49,7 @@ FLAVOR_NAME=${FLAVOR_NAME:-b1-standard-96}
 NETWORK_NAME=${NETWORK_NAME:-public}
 KEYPAIR_NAME=${KEYPAIR_NAME:-shiftstack-ci}
 SERVER_USER=${SERVER_USER:-centos}
-export OS_CLOUD=${OS_CLOUD:-shiftstack-bm}
+export OS_CLOUD=${OVERRIDE_OS_CLOUD:-shiftstack-bm}
 VEXXHOST_USERNAME=${VEXXHOST_USERNAME:-shiftstack-bm-ci}
 VEXXHOST_PROJECT_NAME=${VEXXHOST_PROJECT_NAME:-shiftstack-bm}
 
@@ -126,7 +126,7 @@ else
 fi
 
 # Initialize secrets
-# CLOUDS_YAML is defined in Github Actions secrets
+# All variables are defined in Github Actions secrets
 if [ -n "$VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD" ]; then
     cat << EOF > $WORK_DIR/clouds.yaml
 clouds:
@@ -140,7 +140,10 @@ clouds:
 EOF
 
 else
+  # When OVERRIDE_OS_CLOUD is set, we want to use our own clouds.yaml
+  if [ -z "$OVERRIDE_OS_CLOUD" ]; then
     cp $ROOT_DIR/secrets/clouds.yaml $WORK_DIR/clouds.yaml
+  fi
 fi
 
 if [ -n "$VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY" ]; then
