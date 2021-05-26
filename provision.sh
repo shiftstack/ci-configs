@@ -40,6 +40,8 @@ VEXXHOST_ENDPOINT=${VEXXHOST_ENDPOINT:-}
 VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD=${VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD:-}
 VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY=${VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY:-}
 OPENSHIFT_TENANT_PASSWORD=${OPENSHIFT_TENANT_PASSWORD:-}
+SSL_CA_CERT=${SSL_CA_CERT:-}
+SSL_CA_KEY=${SSL_CA_KEY:-}
 
 ######################
 # VEXXHOST VARIABLES #
@@ -113,7 +115,7 @@ fi
 
 # Sanity check for CI jobs and locally
 if [ -n "IS_CI" ]; then
-    for i in VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY VEXXHOST_ENDPOINT OPENSHIFT_TENANT_PASSWORD; do
+    for i in SSL_CA_CERT SSL_CA_KEY VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY VEXXHOST_ENDPOINT OPENSHIFT_TENANT_PASSWORD; do
        if [ ! -n "$i" ]; then
            echo "ERROR:$ $i is not set and is required when this script runs in CI"
            exit 1
@@ -159,6 +161,24 @@ else
 fi
 chmod 400 $WORK_DIR/ssh-private.key
 
+if [ -n "$SSL_CA_CERT" ]; then
+    cat << EOF > $WORK_DIR/shiftstack-ci-ca.crt
+${SSL_CA_CERT}
+EOF
+
+else
+    cp $ROOT_DIR/secrets/ssl/shiftstack-ci-ca.crt $WORK_DIR/shiftstack-ci-ca.crt
+fi
+if [ -n "$SSL_CA_KEY" ]; then
+    cat << EOF > $WORK_DIR/shiftstack-ci-ca.key
+${SSL_CA_KEY}
+EOF
+
+else
+    cp $ROOT_DIR/secrets/ssl/shiftstack-ci-ca.key $WORK_DIR/shiftstack-ci-ca.key
+fi
+chmod 400 $WORK_DIR/shiftstack-ci-ca.crt $WORK_DIR/shiftstack-ci-ca.key
+
 # OPENSHIFT_TENANT_PASSWORD is defined in Github Actions secrets
 if [ ! -n "$OPENSHIFT_TENANT_PASSWORD" ]; then
     source $ROOT_DIR/secrets/passwords.rc
@@ -199,8 +219,15 @@ export ansible_args="--private-key=$WORK_DIR/ssh-private.key"
 echo "DEBUG: Configure dev-install to deploy OpenStack on $CLUSTER_NAME"
 make config host=$PUBLIC_IP user=$SERVER_USER &>/dev/null
 cat $ROOT_DIR/configs/$CLUSTER_NAME.yaml >> local-overrides.yaml
+INDENTED_SSL_CA_CERT=$(cat $WORK_DIR/shiftstack-ci-ca.crt | sed 's/^/  /')
+INDENTED_SSL_CA_KEY=$(cat $WORK_DIR/shiftstack-ci-ca.key | sed 's/^/  /')
 cat << EOF >> local-overrides.yaml
 openshift_password: "${OPENSHIFT_TENANT_PASSWORD}"
+ssl_enabled: true
+ssl_ca_cert: |
+$INDENTED_SSL_CA_CERT
+ssl_ca_key: |
+$INDENTED_SSL_CA_KEY
 EOF
 
 # Workaround, it doesn't seem to work fine for now when running
