@@ -42,6 +42,7 @@ VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY=${VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVAT
 OPENSHIFT_TENANT_PASSWORD=${OPENSHIFT_TENANT_PASSWORD:-}
 SSL_CA_CERT=${SSL_CA_CERT:-}
 SSL_CA_KEY=${SSL_CA_KEY:-}
+REDHAT_REGISTRY_CREDENTIALS=${REDHAT_REGISTRY_CREDENTIALS:-}
 
 ######################
 # VEXXHOST VARIABLES #
@@ -115,8 +116,8 @@ fi
 
 # Sanity check for CI jobs and locally
 if [ -n "IS_CI" ]; then
-    for i in SSL_CA_CERT SSL_CA_KEY VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY VEXXHOST_ENDPOINT OPENSHIFT_TENANT_PASSWORD; do
-       if [ ! -n "$i" ]; then
+    for i in REDHAT_REGISTRY_CREDENTIALS SSL_CA_CERT SSL_CA_KEY VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY VEXXHOST_ENDPOINT OPENSHIFT_TENANT_PASSWORD; do
+       if [ -z "$i" ]; then
            echo "ERROR:$ $i is not set and is required when this script runs in CI"
            exit 1
        fi
@@ -180,8 +181,13 @@ fi
 chmod 400 $WORK_DIR/shiftstack-ci-ca.crt $WORK_DIR/shiftstack-ci-ca.key
 
 # OPENSHIFT_TENANT_PASSWORD is defined in Github Actions secrets
-if [ ! -n "$OPENSHIFT_TENANT_PASSWORD" ]; then
+if [ -z "$OPENSHIFT_TENANT_PASSWORD" ]; then
     source $ROOT_DIR/secrets/passwords.rc
+fi
+
+# REDHAT_REGISTRY_CREDENTIALS is defined in Github Actions secrets
+if [ -z "$REDHAT_REGISTRY_CREDENTIALS" ]; then
+    source $ROOT_DIR/secrets/redhat-registry.rc
 fi
 
 git clone -q https://github.com/shiftstack/dev-install $WORK_DIR/dev-install
@@ -204,11 +210,12 @@ if ! retry 30 30 create_server; then
     exit 1
 fi
 PUBLIC_IP=$(openstack server show $CLUSTER_NAME -c addresses -f json | grep -Pom 1 '[0-9.]{7,15}')
+SSH_CMD="ssh -o ConnectTimeout=10 -o "StrictHostKeyChecking=no" -i $WORK_DIR/ssh-private.key $SERVER_USER@$PUBLIC_IP"
 # When a node is deployed with Ironic, OpenSSH is open for a few seconds then the node becomes unreachable until the
 # OS starts properly, so let's run SSH with a timeout of 10 seconds, sleep 10 seconds between retries and repeat
 # 90 times, which should give a total timeout of 30 min.
 echo "DEBUG: Trying to SSH $CLUSTER_NAME via $SERVER_USER@$PUBLIC_IP"
-if ! retry 90 10 ssh -o ConnectTimeout=10 -o "StrictHostKeyChecking=no" -i $WORK_DIR/ssh-private.key $SERVER_USER@$PUBLIC_IP uname -a; then
+if ! retry 90 10 $SSH_CMD uname -a; then
     echo "ERROR: Server for $CLUSTER_NAME ($PUBLIC_IP) was not reachable..."
     exit 1
 fi
@@ -230,10 +237,18 @@ ssl_ca_key: |
 $INDENTED_SSL_CA_KEY
 EOF
 
+# If the host is RHEL we'll need credentials to pull images
+# from Red Hat Container Image Registry
+if $SSH_CMD grep -q "Red\ Hat" /etc/redhat-release; then
+    cat << EOF >> local-overrides.yaml
+redhat_registry_credentials: "${REDHAT_REGISTRY_CREDENTIALS}"
+EOF
+fi
+
 # Workaround, it doesn't seem to work fine for now when running
 # the Ansible task that does it in dev-install from Github CI
 echo "DEBUG: Upgrading the server to CentOS Stream..."
-ssh -o ConnectTimeout=10 -o "StrictHostKeyChecking=no" -i $WORK_DIR/ssh-private.key $SERVER_USER@$PUBLIC_IP "if test -f /etc/centos-release; then rpm --query centos-stream-release || bash -c 'sudo dnf -y swap centos-linux-repos centos-stream-repos && sudo dnf -y distro-sync'; fi"
+$SSD_CMD "if test -f /etc/centos-release; then rpm --query centos-stream-release || bash -c 'sudo dnf -y swap centos-linux-repos centos-stream-repos && sudo dnf -y distro-sync'; fi"
 echo "DEBUG: Run dev-install to deploy OpenStack on $CLUSTER_NAME..."
 make osp_full
 echo "DEBUG: Cluster $CLUSTER_NAME was successfuly deployed !"
