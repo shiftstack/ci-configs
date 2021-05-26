@@ -248,7 +248,7 @@ fi
 # Workaround, it doesn't seem to work fine for now when running
 # the Ansible task that does it in dev-install from Github CI
 echo "DEBUG: Upgrading the server to CentOS Stream..."
-$SSD_CMD "if test -f /etc/centos-release; then rpm --query centos-stream-release || bash -c 'sudo dnf -y swap centos-linux-repos centos-stream-repos && sudo dnf -y distro-sync'; fi"
+$SSH_CMD "if test -f /etc/centos-release; then rpm --query centos-stream-release || bash -c 'sudo dnf -y swap centos-linux-repos centos-stream-repos && sudo dnf -y distro-sync'; fi"
 echo "DEBUG: Run dev-install to deploy OpenStack on $CLUSTER_NAME..."
 make osp_full
 echo "DEBUG: Cluster $CLUSTER_NAME was successfuly deployed !"
