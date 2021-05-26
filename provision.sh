@@ -60,7 +60,7 @@ VEXXHOST_PROJECT_NAME=${VEXXHOST_PROJECT_NAME:-shiftstack-bm}
 SCRIPT_NAME=`basename "$0"`
 [[ "$#" -ne 1 ]] && echo "Missing argument, usage: ./$SCRIPT_NAME <config-name>" && exit 1
 ROOT_DIR=$PWD
-WORK_DIR=$(mktemp -d -t shiftstack-ci-XXXXXXXXXX)
+WORK_DIR=${WORK_DIR:-$(mktemp -d -t shiftstack-ci-XXXXXXXXXX)}
 CLUSTER_NAME=$1
 SERVER_CREATE_CMD="openstack server create --wait --key-name $KEYPAIR_NAME --network $NETWORK_NAME --flavor $FLAVOR_NAME --image $IMAGE_NAME $CLUSTER_NAME"
 SERVER_DELETE_CMD="openstack server delete --wait $CLUSTER_NAME"
@@ -190,7 +190,9 @@ if [ -z "$REDHAT_REGISTRY_CREDENTIALS" ]; then
     source $ROOT_DIR/secrets/redhat-registry.rc
 fi
 
-git clone -q https://github.com/shiftstack/dev-install $WORK_DIR/dev-install
+if ! [[ -d "$WORK_DIR/dev-install" ]]; then
+	git clone -q https://github.com/shiftstack/dev-install $WORK_DIR/dev-install
+fi
 
 pushd $WORK_DIR &>/dev/null
 
