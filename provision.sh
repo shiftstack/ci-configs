@@ -199,7 +199,7 @@ if [ -z "$REDHAT_REGISTRY_CREDENTIALS" ]; then
 fi
 
 if ! [[ -d "$WORK_DIR/dev-install" ]]; then
-	git clone -q https://github.com/shiftstack/dev-install $WORK_DIR/dev-install
+	  git clone -q https://github.com/shiftstack/dev-install $WORK_DIR/dev-install
 fi
 
 pushd $WORK_DIR &>/dev/null
@@ -220,7 +220,9 @@ if ! retry 30 30 create_server; then
     exit 1
 fi
 PUBLIC_IP=$(openstack server show $CLUSTER_NAME -c addresses -f json | grep -Pom 1 '[0-9.]{7,15}')
-SSH_CMD="ssh -o ConnectTimeout=10 -o "StrictHostKeyChecking=no" -i $WORK_DIR/ssh-private.key $SERVER_USER@$PUBLIC_IP"
+SSH_ARGS="-o ConnectTimeout=10 -o "StrictHostKeyChecking=no" -i $WORK_DIR/ssh-private.key"
+SSH_CMD="ssh $SSH_ARGS $SERVER_USER@$PUBLIC_IP"
+SCP_CMD="scp -r $SSH_ARGS"
 # When a node is deployed with Ironic, OpenSSH is open for a few seconds then the node becomes unreachable until the
 # OS starts properly, so let's run SSH with a timeout of 10 seconds, sleep 10 seconds between retries and repeat
 # 90 times, which should give a total timeout of 30 min.
@@ -266,14 +268,40 @@ rhsm_activation_key: "${REDHAT_RHSM_ACTIVATION_KEY}"
 EOF
 fi
 
+if [[ $CLUSTER_NAME == *"az"* ]]; then
+    echo "DEBUG: AZ node detected, copying central config into /opt/exported-data"
+    $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data $SERVER_USER@$PUBLIC_IP:/tmp
+    $SSH_CMD "bash -c 'sudo mv /tmp/exported-data /opt'"
+fi
+    
 # Workaround, it doesn't seem to work fine for now when running
 # the Ansible task that does it in dev-install from Github CI
 echo "DEBUG: Upgrading the server to CentOS Stream..."
 $SSH_CMD "if test -f /etc/centos-release; then rpm --query centos-stream-release || bash -c 'sudo dnf -y swap centos-linux-repos centos-stream-repos && sudo dnf -y distro-sync'; fi"
 echo "DEBUG: Run dev-install to deploy OpenStack on $CLUSTER_NAME..."
-make osp_full
+MAKE_ARGS="local_requirements prepare_host network install_stack"
+if [[ $CLUSTER_NAME != *"az"* ]]; then
+    MAKE_ARGS="${MAKE_ARGS} prepare_stack local_os_client"
+fi
+make $MAKE_ARGS
+
+if [[ $CLUSTER_NAME == *"central"* ]]; then
+    echo "DEBUG: DCN central node detected, collecting central config into secrets"
+    rm -rf $ROOT_DIR/secrets/osp-ci/exported-data
+    $SCP_CMD stack@$PUBLIC_IP:/home/stack/exported-data $ROOT_DIR/secrets/osp-ci &>/dev/null
+fi
+
 echo "DEBUG: Cluster $CLUSTER_NAME was successfuly deployed !"
 cd ..
+
+if [[ $CLUSTER_NAME == *"az"* ]]; then
+    echo "DEBUG: AZ node detected, you'll need to update OVS tunnels on central node and other AZs nodes:"
+    echo "ssh stack@<node>"
+    echo "<your favorite text editor> dev-install_net_config.yaml and add the block for OVS tunnels"
+    echo "sudo os-net-config -c dev-install_net_config.yaml"
+    echo "sudo ip link set dev br-ctlplane mtu 1400"
+    echo "sudo ip link set dev hostonly mtu 1400"
+fi
 
 if [ -n "$IS_CI" ]; then
     echo "DEBUG: Destruction of $CLUSTER_NAME..."
