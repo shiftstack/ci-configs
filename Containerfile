@@ -7,7 +7,7 @@ ARG default_user=1000:1000
 
 RUN dnf update -y && \
     dnf install --setopt=tsflags=nodocs -y \
-    ShellCheck ansible make && \
+    ansible make && \
     dnf clean all && rm -rf /var/cache/dnf/* && \
     localedef -c -f UTF-8 -i en_US en_US.UTF-8
 
