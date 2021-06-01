@@ -10,12 +10,14 @@ RUN dnf update -y && \
     ansible make && \
     dnf clean all && rm -rf /var/cache/dnf/*
 
-RUN mkdir -p /src/dev-install \
-	&& curl -sSL $dev_install_url \
-	| tee dev-install.tar.gz \
-	| sha256sum -c <(printf "%s  -" "$dev_install_sha256") \
-	&& tar xzvf dev-install.tar.gz --strip=1 -C /src/dev-install/ \
-	&& rm dev-install.tar.gz
+RUN bash -c '\
+	mkdir -p /src/dev-install \
+		&& curl -sSL $dev_install_url \
+		| tee dev-install.tar.gz \
+		| sha256sum -c <(printf "%s  -" "$dev_install_sha256") \
+		&& tar xzvf dev-install.tar.gz --strip=1 -C /src/dev-install/ \
+		&& rm dev-install.tar.gz \
+	'
 
 RUN chown --recursive $default_user /src
 USER $default_user
