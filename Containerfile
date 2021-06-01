@@ -8,8 +8,7 @@ ARG default_user=1000:1000
 RUN dnf update -y && \
     dnf install --setopt=tsflags=nodocs -y \
     ansible make && \
-    dnf clean all && rm -rf /var/cache/dnf/* && \
-    localedef -c -f UTF-8 -i en_US en_US.UTF-8
+    dnf clean all && rm -rf /var/cache/dnf/*
 
 RUN mkdir -p /src/dev-install \
 	&& curl -sSL $dev_install_url \
@@ -20,7 +19,6 @@ RUN mkdir -p /src/dev-install \
 
 RUN chown --recursive $default_user /src
 USER $default_user
-ENV LC_ALL en_US.UTF-8
 ENV IS_CI=1
 ENV WORK_DIR=/src
 COPY ./ /src
