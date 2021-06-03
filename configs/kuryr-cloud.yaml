@@ -1,0 +1,19 @@
+# This config is supposed to be run with RHEL 8.2
+# and deploy OSP 16.1
+# Before running provision.sh, you need to override
+# the image name:
+# $ export IMAGE_NAME=RHEL-8.2.0-x86_64-latest
+# $ ./provision.sh kuryr-cloud
+create_rhcos_image: false
+hostname: kuryr-cloud
+clouddomain: ci.vexxhost.ca
+ceph_devices:
+  - /dev/sdc
+authorized_keys:
+  - https://github.com/EmilienM.keys
+  - https://github.com/MaysaMacedo.keys
+local_cloudname: kuryr-cloud
+rhsm_enabled: true
+# Change the credentials:
+rhsm_username: joe
+rhsm_password: secrete
