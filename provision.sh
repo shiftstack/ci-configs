@@ -43,6 +43,8 @@ OPENSHIFT_TENANT_PASSWORD=${OPENSHIFT_TENANT_PASSWORD:-}
 SSL_CA_CERT=${SSL_CA_CERT:-}
 SSL_CA_KEY=${SSL_CA_KEY:-}
 REDHAT_REGISTRY_CREDENTIALS=${REDHAT_REGISTRY_CREDENTIALS:-}
+REDHAT_RHSM_ORG=${REDHAT_RHSM_ORG:-}
+REDHAT_RHSM_ACTIVATION_KEY=${REDHAT_RHSM_ACTIVATION_KEY:-}
 
 ######################
 # VEXXHOST VARIABLES #
@@ -187,7 +189,7 @@ fi
 
 # REDHAT_REGISTRY_CREDENTIALS is defined in Github Actions secrets
 if [ -z "$REDHAT_REGISTRY_CREDENTIALS" ]; then
-    source $ROOT_DIR/secrets/redhat-registry.rc
+    source $ROOT_DIR/secrets/redhat-credentials.rc
 fi
 
 if ! [[ -d "$WORK_DIR/dev-install" ]]; then
@@ -244,6 +246,8 @@ EOF
 if $SSH_CMD grep -q "Red\ Hat" /etc/redhat-release; then
     cat << EOF >> local-overrides.yaml
 redhat_registry_credentials: "${REDHAT_REGISTRY_CREDENTIALS}"
+rhsm_org_id: "${REDHAT_RHSM_ORG}"
+rhsm_activation_key: "${REDHAT_RHSM_ACTIVATION_KEY}"
 EOF
 fi
 
