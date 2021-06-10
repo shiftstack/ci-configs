@@ -47,14 +47,20 @@ REDHAT_RHSM_ORG=${REDHAT_RHSM_ORG:-}
 REDHAT_RHSM_ACTIVATION_KEY=${REDHAT_RHSM_ACTIVATION_KEY:-}
 
 ######################
-# VEXXHOST VARIABLES #
+# PLATFORM VARIABLES #
 ######################
+# Note that defaults are set to use our VEXXHOST cloud
+# but they can be overriden to deploy somewhere else (e.g. PSI)
 IMAGE_NAME=${IMAGE_NAME:-centos-8-baremetal}
 FLAVOR_NAME=${FLAVOR_NAME:-b1-standard-96}
 NETWORK_NAME=${NETWORK_NAME:-public}
 KEYPAIR_NAME=${KEYPAIR_NAME:-shiftstack-ci}
 SERVER_USER=${SERVER_USER:-centos}
 OVERRIDE_OS_CLOUD=${OVERRIDE_OS_CLOUD:-}
+
+######################
+# VEXXHOST VARIABLES #
+######################
 export OS_CLOUD=${OVERRIDE_OS_CLOUD:-shiftstack-bm}
 VEXXHOST_USERNAME=${VEXXHOST_USERNAME:-shiftstack-bm-ci}
 VEXXHOST_PROJECT_NAME=${VEXXHOST_PROJECT_NAME:-shiftstack-bm}
@@ -245,6 +251,9 @@ authorized_keys:
   - https://github.com/mandre.keys
   - https://github.com/mdbooth.keys
   - https://github.com/pierreprinetti.keys
+create_rhcos_image: false
+hostname: $CLUSTER_NAME
+local_cloudname: $CLUSTER_NAME
 EOF
 
 # If the host is RHEL we'll need credentials to pull images
