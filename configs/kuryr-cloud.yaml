@@ -9,8 +9,5 @@ hostname: kuryr-cloud
 clouddomain: ci.vexxhost.ca
 ceph_devices:
   - /dev/sdc
-authorized_keys:
-  - https://github.com/EmilienM.keys
-  - https://github.com/MaysaMacedo.keys
 local_cloudname: kuryr-cloud
 rhsm_enabled: true
