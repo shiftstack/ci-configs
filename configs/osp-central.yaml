@@ -1,0 +1,6 @@
+clouddomain: ci.vexxhost.ca
+ceph_devices:
+  - /dev/sdc
+manila_enabled: true
+dcn_az: central
+rhsm_enabled: true
