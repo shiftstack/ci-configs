@@ -13,12 +13,12 @@ against them.
 
 The cluster name has to be a valid config in  [`configs`](./configs) (e.g. default-cloud).
 
-## configs
+## Configs
 
 The files in [`configs`](./configs) directory are [`dev-install`](https://github.com/shiftstack/dev-install) overrides,
 where we define a specific configuration for each cluster.
 
-## secrets
+## Secrets
 
 This directory is encrypted and is used to store `clouds.yaml`, passwords and the SSH private key.
 
