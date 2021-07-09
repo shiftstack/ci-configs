@@ -1,0 +1,9 @@
+clouddomain: ci.vexxhost.ca
+ceph_devices:
+  - /dev/sdc
+  - /dev/sdd
+manila_enabled: true
+dcn_az: central
+tripleo_repos_repos:
+  - current-tripleo-dev
+  - ceph
