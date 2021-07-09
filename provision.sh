@@ -270,7 +270,7 @@ fi
 
 if [[ $CLUSTER_NAME == *"az"* ]]; then
     echo "DEBUG: AZ node detected, copying central config into /opt/exported-data"
-    $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data $SERVER_USER@$PUBLIC_IP:/tmp
+    $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME $SERVER_USER@$PUBLIC_IP:/tmp/exported-data
     $SSH_CMD "bash -c 'sudo mv /tmp/exported-data /opt'"
 fi
     
@@ -287,8 +287,8 @@ make $MAKE_ARGS
 
 if [[ $CLUSTER_NAME == *"central"* ]]; then
     echo "DEBUG: DCN central node detected, collecting central config into secrets"
-    rm -rf $ROOT_DIR/secrets/osp-ci/exported-data
-    $SCP_CMD stack@$PUBLIC_IP:/home/stack/exported-data $ROOT_DIR/secrets/osp-ci &>/dev/null
+    rm -rf $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME
+    $SCP_CMD stack@$PUBLIC_IP:/home/stack/exported-data $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME &>/dev/null
 fi
 
 echo "DEBUG: Cluster $CLUSTER_NAME was successfuly deployed !"
