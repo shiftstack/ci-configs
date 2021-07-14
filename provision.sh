@@ -57,6 +57,7 @@ NETWORK_NAME=${NETWORK_NAME:-public}
 KEYPAIR_NAME=${KEYPAIR_NAME:-shiftstack-ci}
 SERVER_USER=${SERVER_USER:-cloud-user}
 OVERRIDE_OS_CLOUD=${OVERRIDE_OS_CLOUD:-}
+CENTRAL_NAME=${CENTRAL_NAME:-mecha-central}
 
 ######################
 # VEXXHOST VARIABLES #
@@ -270,7 +271,8 @@ fi
 
 if [[ $CLUSTER_NAME == *"az"* ]]; then
     echo "DEBUG: AZ node detected, copying central config into /opt/exported-data"
-    $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME $SERVER_USER@$PUBLIC_IP:/tmp/exported-data
+    # TODO(Emilien): We need to make it discoverable and not hard-code it but for our current CI this is fine.
+    $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data/$CENTRAL_NAME $SERVER_USER@$PUBLIC_IP:/tmp/exported-data
     $SSH_CMD "bash -c 'sudo mv /tmp/exported-data /opt'"
 fi
     
@@ -287,6 +289,7 @@ make $MAKE_ARGS
 
 if [[ $CLUSTER_NAME == *"central"* ]]; then
     echo "DEBUG: DCN central node detected, collecting central config into secrets"
+    mkdir -p $ROOT_DIR/secrets/osp-ci/exported-data/
     rm -rf $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME
     $SCP_CMD stack@$PUBLIC_IP:/home/stack/exported-data $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME &>/dev/null
 fi
@@ -300,7 +303,7 @@ if [[ $CLUSTER_NAME == *"az"* ]]; then
     echo "<your favorite text editor> dev-install_net_config.yaml and add the block for OVS tunnels"
     echo "sudo os-net-config -c dev-install_net_config.yaml"
     echo "sudo ip link set dev br-ctlplane mtu 1400"
-    echo "sudo ip link set dev hostonly mtu 1400"
+    echo "sudo ip link set dev br-hostonly mtu 1400"
 fi
 
 if [ -n "$IS_CI" ]; then

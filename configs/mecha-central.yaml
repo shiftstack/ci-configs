@@ -1,9 +1,10 @@
 clouddomain: ci.vexxhost.ca
-ceph_devices:
-  - /dev/sdc
-  - /dev/sdd
 manila_enabled: true
+ceph_devices: true
 dcn_az: central
 tripleo_repos_repos:
   - current-tripleo-dev
   - ceph
+swiftoperator_enabled: false
+enabled_services:
+  - /usr/share/openstack-tripleo-heat-templates/environments/disable-swift.yaml
