@@ -1,0 +1,12 @@
+clouddomain: ci.vexxhost.ca
+ceph_devices: true
+octavia_enabled: false
+dcn_az: az0
+local_ip: 192.168.24.10
+control_plane_ip: 192.168.24.11
+hostonly_gateway: 192.168.25.2
+tunnel_remote_ips:
+  - 38.102.83.51
+tripleo_repos_repos:
+  - current-tripleo-dev
+  - ceph
