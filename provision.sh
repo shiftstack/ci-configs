@@ -275,7 +275,11 @@ if [[ $CLUSTER_NAME == *"az"* ]]; then
     $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data/$CENTRAL_NAME $SERVER_USER@$PUBLIC_IP:/tmp/exported-data
     $SSH_CMD "bash -c 'sudo mv /tmp/exported-data /opt'"
 fi
-    
+
+# We need persistent NIC names otherwise we can have networking issues after reboots
+echo "DEBUG: Ensure that Persistent NIC naming is not disabled..."
+$SSH_CMD "if grep -q net.ifnames=0 /etc/default/grub; then sudo sed -i 's/net.ifnames=0//g' /etc/default/grub && sudo reboot; fi"
+
 # Workaround, it doesn't seem to work fine for now when running
 # the Ansible task that does it in dev-install from Github CI
 echo "DEBUG: Upgrading the server to CentOS Stream..."
