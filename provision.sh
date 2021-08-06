@@ -298,12 +298,10 @@ echo "DEBUG: Cluster $CLUSTER_NAME was successfuly deployed !"
 cd ..
 
 if [[ $CLUSTER_NAME == *"az"* ]]; then
-    echo "DEBUG: AZ node detected, you'll need to update OVS tunnels on central node and other AZs nodes:"
+    echo "DEBUG: AZ node detected, you'll need to update OVS tunnels on central node"
     echo "ssh stack@<node>"
     echo "<your favorite text editor> dev-install_net_config.yaml and add the block for OVS tunnels"
     echo "sudo os-net-config -c dev-install_net_config.yaml"
-    echo "sudo ip link set dev br-ctlplane mtu 1400"
-    echo "sudo ip link set dev br-hostonly mtu 1400"
 fi
 
 if [ -n "$IS_CI" ]; then
