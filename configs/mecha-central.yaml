@@ -11,3 +11,13 @@ tripleo_repos_repos:
 swiftoperator_enabled: false
 enabled_services:
   - /usr/share/openstack-tripleo-heat-templates/environments/disable-swift.yaml
+# OpenStack API runnings under WSGI have a common function to calculate the number of workers:
+# The value for os_workers is max between '(<# processors> / 2)' and '2' with
+# a cap of 12.
+# https://opendev.org/openstack/puppet-openstacklib/src/commit/495701901eabb24d28f2a2276275e1c1537133c1/lib/facter/os_workers.rb#L37-L38
+# On vexxhost machines, we have 96 cores, so each API can create up to 12 workers.
+# This has been problematic for us when deploying OpenShift with Kuryr which
+# consumes a lot of load balancers and Octavia is using more than half of the RAM available on the host
+# so we decided to reduce the number of workers to reduce the amount of RAM that will be consumed.
+standalone_extra_config:
+  octavia::wsgi::apache:workers: 4
