@@ -1,5 +1,6 @@
 clouddomain: ci.vexxhost.ca
-ceph_devices: true
+ceph_devices:
+- /dev/sdb
 ephemeral_storage_devices:
 - /dev/sdc
 - /dev/sdd
@@ -9,7 +10,42 @@ local_ip: 192.168.24.10
 control_plane_ip: 192.168.24.11
 hostonly_gateway: 192.168.25.2
 tunnel_remote_ips:
-  - 38.102.83.91
-tripleo_repos_repos:
-  - current-tripleo-dev
-  - ceph
+  - 38.102.83.97
+rhsm_enabled: true
+rhsm_release: 8.4
+rhsm_container_tools_version: 3.0
+rhsm_repos:
+  - advanced-virt-for-rhel-8-x86_64-rpms
+  - ansible-2.9-for-rhel-8-x86_64-rpms
+  - fast-datapath-for-rhel-8-x86_64-rpms
+  - openstack-16-tools-for-rhel-8-x86_64-rpms
+  - openstack-beta-for-rhel-8-x86_64-rpms
+  - rhceph-4-tools-for-rhel-8-x86_64-rpms
+  - rhel-8-for-x86_64-appstream-eus-rpms
+  - rhel-8-for-x86_64-baseos-eus-rpms
+  - rhel-8-for-x86_64-highavailability-eus-rpms
+virt_release: av
+cip_config:
+  - set:
+      ceph_alertmanager_image: ose-prometheus-alertmanager
+      ceph_alertmanager_namespace: registry.redhat.io/openshift4
+      ceph_alertmanager_tag: 4.1
+      ceph_grafana_image: rhceph-4-dashboard-rhel8
+      ceph_grafana_namespace: registry.redhat.io/rhceph
+      ceph_grafana_tag: 4
+      ceph_image: rhceph-4-rhel8
+      ceph_namespace: registry.redhat.io/rhceph
+      ceph_node_exporter_image: ose-prometheus-node-exporter
+      ceph_node_exporter_namespace: registry.redhat.io/openshift4
+      ceph_node_exporter_tag: v4.1
+      ceph_prometheus_image: ose-prometheus
+      ceph_prometheus_namespace: registry.redhat.io/openshift4
+      ceph_prometheus_tag: 4.1
+      ceph_tag: latest
+      name_prefix: openstack-
+      name_suffix: ''
+      namespace: registry.redhat.io/rhosp-beta
+      neutron_driver: ovn
+      rhel_containers: false
+      tag: '16.2'
+    tag_from_label: '{version}-{release}'
