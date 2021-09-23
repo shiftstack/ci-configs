@@ -200,7 +200,7 @@ if [ -z "$REDHAT_REGISTRY_CREDENTIALS" ]; then
 fi
 
 if ! [[ -d "$WORK_DIR/dev-install" ]]; then
-	  git clone -q https://github.com/shiftstack/dev-install $WORK_DIR/dev-install
+	  git clone -b dpdk_sriov -q https://github.com/shiftstack/dev-install $WORK_DIR/dev-install
 fi
 
 pushd $WORK_DIR &>/dev/null
