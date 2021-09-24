@@ -263,6 +263,7 @@ EOF
 # from Red Hat Container Image Registry
 if $SSH_CMD grep -q "Red\ Hat" /etc/redhat-release; then
     cat << EOF >> local-overrides.yaml
+rhsm_ephemeral: false
 redhat_registry_credentials: "${REDHAT_REGISTRY_CREDENTIALS}"
 rhsm_org_id: "${REDHAT_RHSM_ORG}"
 rhsm_activation_key: "${REDHAT_RHSM_ACTIVATION_KEY}"
