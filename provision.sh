@@ -51,7 +51,7 @@ REDHAT_RHSM_ACTIVATION_KEY=${REDHAT_RHSM_ACTIVATION_KEY:-}
 ######################
 # Note that defaults are set to use our VEXXHOST cloud
 # but they can be overriden to deploy somewhere else (e.g. PSI)
-IMAGE_NAME=${IMAGE_NAME:-rhel-8.2-x86_64}
+IMAGE_NAME=${IMAGE_NAME:-rhel-8.4-x86_64}
 FLAVOR_NAME=${FLAVOR_NAME:-b1-standard-96}
 NETWORK_NAME=${NETWORK_NAME:-public}
 KEYPAIR_NAME=${KEYPAIR_NAME:-shiftstack-ci}
