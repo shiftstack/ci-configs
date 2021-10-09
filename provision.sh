@@ -277,6 +277,11 @@ if [[ $CLUSTER_NAME == *"az"* ]]; then
     $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data/$CENTRAL_NAME $SERVER_USER@$PUBLIC_IP:/tmp/exported-data
     $SSH_CMD "bash -c 'sudo mv /tmp/exported-data /opt'"
 fi
+
+if [[ $CLUSTER_NAME == *"nfv"* ]]; then
+    echo "DEBUG: NFV node detected, copying squid config"
+    $SCP_CMD $ROOT_DIR/secrets/squid stack@$PUBLIC_IP: &>/dev/null
+fi
     
 # Workaround, it doesn't seem to work fine for now when running
 # the Ansible task that does it in dev-install from Github CI
