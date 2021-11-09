@@ -12,3 +12,5 @@ hostonly_gateway: 192.168.25.2
 tunnel_remote_ips:
   - 38.102.83.97
 rhsm_enabled: true
+extra_heat_params:
+  CinderRbdFlattenVolumeFromSnapshot: true
