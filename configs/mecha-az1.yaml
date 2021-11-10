@@ -1,8 +1,8 @@
 clouddomain: ci.vexxhost.ca
 ceph_devices:
-- /dev/sdb
-ephemeral_storage_devices:
 - /dev/sdc
+ephemeral_storage_devices:
+- /dev/sdb
 - /dev/sdd
 octavia_enabled: false
 dcn_az: az1
@@ -12,7 +12,9 @@ local_ip: 192.168.24.20
 control_plane_ip: 192.168.24.21
 hostonly_gateway: 192.168.25.3
 tunnel_remote_ips:
-  - 38.102.83.97
+  - 38.102.83.188
 rhsm_enabled: true
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
+post_install: |
+  sudo ovs-vsctl set Open_vSwitch . external-ids:ovn-cms-options="enable-chassis-as-gw,availability-zones=central"

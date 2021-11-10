@@ -1,9 +1,9 @@
 clouddomain: ci.vexxhost.ca
 manila_enabled: true
 ceph_devices:
-  - /dev/sdb
-ephemeral_storage_devices:
   - /dev/sdc
+ephemeral_storage_devices:
+  - /dev/sdb
   - /dev/sdd
 dcn_az: central
 # https://issues.redhat.com/browse/OCPBUGS-2921
@@ -24,3 +24,23 @@ standalone_extra_config:
   octavia::wsgi::apache:workers: 4
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
+post_install: |
+  sudo dnf install -y wget
+  export OS_CLOUD=standalone
+  openstack image show centos8-stream || wget https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20210210.0.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-8-20210210.0.x86_64.qcow2 centos8-stream && rm -f CentOS-Stream-GenericCloud-8-20210210.0.x86_64.qcow2
+  openstack project create openshift-central
+  openstack project create openshift-az0
+  openstack project create openshift-kuryr
+  openstack role add --user openshift --project openshift-central member
+  openstack role add --user openshift --project openshift-az0 member
+  openstack role add --user openshift --project openshift-kuryr member
+  openstack project delete openshift
+  openstack quota set --cores 150 --fixed-ips -1 --injected-file-size -1 --injected-files -1 --instances -1 --key-pairs -1 --properties -1 --ram 790000 --gigabytes 2000 --server-groups -1 --server-group-members -1 --backups -1 --backup-gigabytes -1 --per-volume-gigabytes -1 --snapshots -1 --volumes -1 --floating-ips 20 --secgroup-rules -1 --secgroups -1 --networks -1 --subnets -1 --ports -1 --routers -1 --rbac-policies -1 --subnetpools -1 openshift-central
+  openstack quota set --cores 60 --fixed-ips -1 --injected-file-size -1 --injected-files -1 --instances -1 --key-pairs -1 --properties -1 --ram 250000 --gigabytes 2000 --server-groups -1 --server-group-members -1 --backups -1 --backup-gigabytes -1 --per-volume-gigabytes -1 --snapshots -1 --volumes -1 --floating-ips 8 --secgroup-rules -1 --secgroups -1 --networks -1 --subnets -1 --ports -1 --routers -1 --rbac-policies -1 --subnetpools -1 openshift-kuryr
+  openstack quota set --cores 74 --fixed-ips -1 --injected-file-size -1 --injected-files -1 --instances -1 --key-pairs -1 --properties -1 --ram 500000 --gigabytes 1000 --server-groups -1 --server-group-members -1 --backups -1 --backup-gigabytes -1 --per-volume-gigabytes -1 --snapshots -1 --volumes -1 --floating-ips 10 --secgroup-rules -1 --secgroups -1 --networks -1 --subnets -1 --ports -1 --routers -1 --rbac-policies -1 --subnetpools -1 openshift-az0
+  openstack network delete hostonly
+  openstack network create --project openshift-central --share --external --provider-physical-network hostonly --provider-network-type flat hostonly
+  openstack subnet create --project openshift-central hostonly-subnet --subnet-range 192.168.25.0/24 --dhcp --gateway 192.168.25.1 --dns-nameserver 1.1.1.1 --allocation-pool "start=192.168.25.2,end=192.168.25.252" --network hostonly
+  openstack network create --external --provider-physical-network external --provider-network-type flat external
+  openstack subnet create external-subnet --subnet-range 38.129.56.0/24 --no-dhcp --gateway 38.129.56.1 --network external
+  openstack subnet set external-subnet --no-allocation-pool --allocation-pool start=38.129.56.131,end=38.129.56.131 --allocation-pool start=38.129.56.139,end=38.129.56.139 --allocation-pool start=38.129.56.218,end=38.129.56.218 --allocation-pool start=38.129.56.239,end=38.129.56.239 --allocation-pool start=38.129.56.107,end=38.129.56.107 --allocation-pool start=38.129.56.59,end=38.129.56.59 --allocation-pool start=38.129.56.219,end=38.129.56.219 --allocation-pool start=38.129.56.141,end=38.129.56.141 --allocation-pool start=38.129.56.10,end=38.129.56.10 --allocation-pool start=38.129.56.173,end=38.129.56.173 --allocation-pool start=38.129.56.137,end=38.129.56.137 --allocation-pool start=38.129.56.61,end=38.129.56.61 --allocation-pool start=38.129.56.152,end=38.129.56.152 --allocation-pool start=38.129.56.135,end=38.129.56.135 --allocation-pool start=38.129.56.150,end=38.129.56.150 --allocation-pool start=38.129.56.94,end=38.129.56.94 --allocation-pool start=38.129.56.56,end=38.129.56.56 --allocation-pool start=38.129.56.148,end=38.129.56.148 --allocation-pool start=38.129.56.221,end=38.129.56.221 --allocation-pool start=38.129.56.193,end=38.129.56.193 --allocation-pool start=38.129.56.210,end=38.129.56.210 --allocation-pool start=38.129.56.130,end=38.129.56.130 --allocation-pool start=38.129.56.184,end=38.129.56.184 --allocation-pool start=38.129.56.67,end=38.129.56.67 --allocation-pool start=38.129.56.103,end=38.129.56.103 --allocation-pool start=38.129.56.185,end=38.129.56.185 --allocation-pool start=38.129.56.205,end=38.129.56.205 --allocation-pool start=38.129.56.84,end=38.129.56.84 --allocation-pool start=38.129.56.214,end=38.129.56.214 --allocation-pool start=38.129.56.63,end=38.129.56.63 --allocation-pool start=38.129.56.9,end=38.129.56.9 --allocation-pool start=38.129.56.202,end=38.129.56.202 --allocation-pool start=38.129.56.187,end=38.129.56.187 --allocation-pool start=38.129.56.227,end=38.129.56.227 --allocation-pool start=38.129.56.110,end=38.129.56.110 --allocation-pool start=38.129.56.145,end=38.129.56.145
