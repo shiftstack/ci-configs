@@ -283,11 +283,12 @@ fi
 echo "DEBUG: Upgrading the server to CentOS Stream..."
 $SSH_CMD "if test -f /etc/centos-release; then rpm --query centos-stream-release || bash -c 'sudo dnf -y swap centos-linux-repos centos-stream-repos && sudo dnf -y distro-sync'; fi"
 echo "DEBUG: Run dev-install to deploy OpenStack on $CLUSTER_NAME..."
-MAKE_ARGS="local_requirements prepare_host network install_stack"
+MAKE_TARGETS="local_requirements prepare_host network install_stack"
 if [[ $CLUSTER_NAME != *"az"* ]]; then
-    MAKE_ARGS="${MAKE_ARGS} prepare_stack local_os_client"
+    MAKE_TARGETS="${MAKE_TARGETS} prepare_stack local_os_client"
 fi
-make $MAKE_ARGS
+MAKE_TARGETS="${MAKE_TARGETS} post_install"
+make $MAKE_TARGETS
 
 if [[ $CLUSTER_NAME == *"central"* ]]; then
     echo "DEBUG: DCN central node detected, collecting central config into secrets"
