@@ -278,11 +278,6 @@ if [[ $CLUSTER_NAME == *"az"* ]]; then
     $SSH_CMD "bash -c 'sudo mv /tmp/exported-data /opt'"
 fi
 
-if [[ $CLUSTER_NAME == *"nfv"* ]]; then
-    echo "DEBUG: NFV node detected, copying squid config"
-    $SCP_CMD $ROOT_DIR/secrets/squid stack@$PUBLIC_IP: &>/dev/null
-fi
-    
 # Workaround, it doesn't seem to work fine for now when running
 # the Ansible task that does it in dev-install from Github CI
 echo "DEBUG: Upgrading the server to CentOS Stream..."
@@ -292,8 +287,14 @@ MAKE_TARGETS="local_requirements prepare_host network install_stack"
 if [[ $CLUSTER_NAME != *"az"* ]]; then
     MAKE_TARGETS="${MAKE_TARGETS} prepare_stack local_os_client"
 fi
-MAKE_TARGETS="${MAKE_TARGETS} post_install"
 make $MAKE_TARGETS
+
+if [[ $CLUSTER_NAME == *"nfv"* ]]; then
+    echo "DEBUG: NFV node detected, copying squid config"
+    $SCP_CMD $ROOT_DIR/secrets/squid stack@$PUBLIC_IP: &>/dev/null
+fi
+    
+make post_install
 
 if [[ $CLUSTER_NAME == *"central"* ]]; then
     echo "DEBUG: DCN central node detected, collecting central config into secrets"
