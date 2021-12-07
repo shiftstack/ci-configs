@@ -72,8 +72,6 @@ extra_heat_params:
 post_install: |
   sudo dnf install -y wget
   export OS_CLOUD=standalone
-  openstack subnet set hostonly-subnet --no-allocation-pool --allocation-pool start=192.168.25.2,end=192.168.25.127
-  openstack subnet set hostonly-subnet --tag no_dhcp_range=192.168.25.128/25
   for i in m1.xlarge m1.large.nodisk m1.xlarge.nodisk m1.large m1.medium m1.tiny m1.small; do openstack flavor set --no-property --property hw:mem_page_size=large $i; done
   openstack flavor delete m1.xlarge.nfv
   openstack flavor create --ram 16384 --disk 40 --vcpu 8 --public m1.xlarge.nfv
