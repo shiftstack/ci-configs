@@ -14,9 +14,9 @@ standalone_extra_config:
       dport: 3128
       proto: tcp
       action: accept
-sriov_interface: enp193s0f1
+sriov_interface: enp129s0f1
 sriov_nova_pci_passthrough:
-  - devname: "enp193s0f1"
+  - devname: "enp129s0f1"
     physical_network: "hostonly-sriov"
 sriov_nic_numvfs: 63
 dpdk_interface: enp65s0f0
