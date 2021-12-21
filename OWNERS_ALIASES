@@ -3,19 +3,17 @@
 aliases:
   openstack-approvers:
     - EmilienM
-    - Fedosin
-    - adduarte
     - iamemilio
     - mandre
     - MaysaMacedo
     - mdbooth
     - pierreprinetti
+    - stephenfin
   openstack-reviewers:
     - EmilienM
-    - Fedosin
-    - adduarte
     - iamemilio
     - mandre
     - MaysaMacedo
     - mdbooth
     - pierreprinetti
+    - stephenfin
