@@ -254,7 +254,7 @@ authorized_keys:
   - https://github.com/mandre.keys
   - https://github.com/mdbooth.keys
   - https://github.com/pierreprinetti.keys
-  - https://github.com/adduarte.keys
+  - https://github.com/stephenfin.keys
 create_rhcos_image: false
 hostname: $CLUSTER_NAME
 local_cloudname: $CLUSTER_NAME
