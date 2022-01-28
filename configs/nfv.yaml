@@ -54,7 +54,7 @@ dpdk_interface: enp65s0f0
 # Core 29 [22, 70]        [46, 94]       
 # Core 30 [23, 71]        [47, 95]
 #
-kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=384 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
+kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=479 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
 tuned_isolated_cores: 10-23,58-71,34-47,82-95
 extra_heat_params:
   # We plan to have a maximum of 2 OCP clusters deployed at the same time,
