@@ -137,6 +137,13 @@ else
    fi
 fi
 
+if [[ $CLUSTER_NAME == *"az"* ]]; then
+    if [ -z "$CENTRAL_NAME" ]; then
+        echo "CENTRAL_NAME has to be defined when deploying additional nodes in a specific AZ"
+        exit 1
+    fi
+fi
+
 # Initialize secrets
 # All variables are defined in Github Actions secrets
 if [ -n "$VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD" ]; then
@@ -271,10 +278,6 @@ EOF
 fi
 
 if [[ $CLUSTER_NAME == *"az"* ]]; then
-    if [ -z "$CENTRAL_NAME" ]; then
-        echo "CENTRAL_NAME has to be defined when deploying additional nodes in a specific AZ"
-        exit 1
-    fi
     echo "DEBUG: AZ node detected, copying central config into /opt/exported-data"
     # TODO(Emilien): We need to make it discoverable and not hard-code it but for our current CI this is fine.
     $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data/$CENTRAL_NAME $SERVER_USER@$PUBLIC_IP:/tmp/exported-data
@@ -292,7 +295,7 @@ if [[ $CLUSTER_NAME != *"az"* ]]; then
 fi
 make $MAKE_TARGETS
 
-if [[ $CLUSTER_NAME == *"nfv"* ]]; then
+if [[ $CLUSTER_NAME == *"nfv"* ]] || [[ $CLUSTER_NAME == *"hwoffload"* ]]; then
     echo "DEBUG: NFV node detected, copying squid config"
     $SCP_CMD $ROOT_DIR/secrets/squid stack@$PUBLIC_IP: &>/dev/null
 fi
