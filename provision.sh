@@ -57,7 +57,6 @@ NETWORK_NAME=${NETWORK_NAME:-public}
 KEYPAIR_NAME=${KEYPAIR_NAME:-shiftstack-ci}
 SERVER_USER=${SERVER_USER:-cloud-user}
 OVERRIDE_OS_CLOUD=${OVERRIDE_OS_CLOUD:-}
-CENTRAL_NAME=${CENTRAL_NAME:-mecha-central}
 
 ######################
 # VEXXHOST VARIABLES #
@@ -272,6 +271,10 @@ EOF
 fi
 
 if [[ $CLUSTER_NAME == *"az"* ]]; then
+    if [ -z "$CENTRAL_NAME" ]; then
+        echo "CENTRAL_NAME has to be defined when deploying additional nodes in a specific AZ"
+        exit 1
+    fi
     echo "DEBUG: AZ node detected, copying central config into /opt/exported-data"
     # TODO(Emilien): We need to make it discoverable and not hard-code it but for our current CI this is fine.
     $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data/$CENTRAL_NAME $SERVER_USER@$PUBLIC_IP:/tmp/exported-data
