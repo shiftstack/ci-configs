@@ -7,8 +7,14 @@ against them.
 
 ## How to use
 
+To provision a server:
 ```
 ./provision.sh <cluster-name>
+```
+
+To remove a server:
+```
+./deprovision.sh <cluster-name>
 ```
 
 The cluster name has to be a valid config in  [`configs`](./configs) (e.g. default-cloud).
