@@ -6,6 +6,8 @@ ephemeral_storage_devices:
   - /dev/sdc
   - /dev/sdd
 dcn_az: central
+# https://issues.redhat.com/browse/OCPBUGS-2921
+neutron_mtu: 1400
 swiftoperator_enabled: false
 rhsm_enabled: true
 enabled_services:
