@@ -255,7 +255,9 @@ $INDENTED_SSL_CA_CERT
 ssl_ca_key: |
 $INDENTED_SSL_CA_KEY
 authorized_keys:
+  - https://github.com/dulek.keys
   - https://github.com/EmilienM.keys
+  - https://github.com/gryf.keys
   - https://github.com/MaysaMacedo.keys
   - https://github.com/mandre.keys
   - https://github.com/mdbooth.keys
@@ -295,7 +297,7 @@ if [[ $CLUSTER_NAME != *"az"* ]]; then
 fi
 make $MAKE_TARGETS
 
-if [[ $CLUSTER_NAME == *"nfv"* ]] || [[ $CLUSTER_NAME == *"hwoffload"* ]]; then
+if [[ $CLUSTER_NAME == *"nfv"* ]] || [[ $CLUSTER_NAME == *"hwoffload"* ]] || [[ $CLUSTER_NAME == *"mecha-central"* ]]; then
     echo "DEBUG: NFV node detected, copying squid config"
     $SCP_CMD $ROOT_DIR/secrets/squid stack@$PUBLIC_IP: &>/dev/null
 fi
