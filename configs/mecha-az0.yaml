@@ -11,8 +11,9 @@ neutron_mtu: 1300
 local_ip: 192.168.24.10
 control_plane_ip: 192.168.24.11
 hostonly_gateway: 192.168.25.2
+hostonly_v6_gateway: 2001:db8::2
 tunnel_remote_ips:
-  - 38.102.83.188
+  - 38.102.83.101
 rhsm_enabled: true
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
