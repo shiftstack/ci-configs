@@ -6,8 +6,6 @@ ephemeral_storage_devices:
   - /dev/sdb
   - /dev/sdd
 dcn_az: central
-# https://issues.redhat.com/browse/OCPBUGS-2921
-neutron_mtu: 1300
 swiftoperator_enabled: false
 rhsm_enabled: true
 hostonly_fip_pool_start: 192.168.25.10

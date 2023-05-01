@@ -6,8 +6,6 @@ ephemeral_storage_devices:
 - /dev/sdd
 octavia_enabled: false
 dcn_az: az0
-# https://issues.redhat.com/browse/OCPBUGS-2921
-neutron_mtu: 1300
 local_ip: 192.168.24.10
 control_plane_ip: 192.168.24.11
 hostonly_gateway: 192.168.25.2
