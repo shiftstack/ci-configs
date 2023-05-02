@@ -34,6 +34,8 @@ post_install: |
   export OS_CLOUD=standalone
   openstack network set --name external hostonly
   openstack subnet set --name external-subnet hostonly-subnet
+  openstack network create --external --provider-physical-network external --provider-network-type flat external-proxy
+  openstack subnet create external-proxy-subnet --subnet-range 38.102.83.0/24 --no-dhcp --gateway 38.102.83.1 --allocation-pool "start=38.102.83.81,end=38.102.83.81" --allocation-pool "start=38.102.83.91,end=38.102.83.91" --allocation-pool "start=38.102.83.10,end=38.102.83.10" --allocation-pool "start=38.102.83.78,end="38.102.83.78 --allocation-pool "start=38.102.83.72,end=38.102.83.72" --allocation-pool "start=38.102.83.33,end=38.102.83.33" --allocation-pool "start=38.102.83.105,end=38.102.83.105" --allocation-pool "start=38.102.83.52,end=38.102.83.52"
   openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220302.0.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-20220302.0.x86_64.qcow2 centos9-stream && rm -ff CentOS-Stream-GenericCloud-9-20220302.0.x86_64.qcow2
   openstack project delete openshift
   openstack project create openshift-central
