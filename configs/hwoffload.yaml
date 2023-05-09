@@ -80,6 +80,12 @@ post_install: |
   openstack network create --project openshift --share --external --provider-physical-network mellanox-hwoffload --provider-network-type flat mellanox-hwoffload
   openstack subnet create --project openshift mellanox-hwoffload-subnet --subnet-range 192.168.26.0/24 --no-dhcp --gateway 192.168.26.1 --allocation-pool "start=192.168.26.2,end=192.168.26.254" --network mellanox-hwoffload
   for i in m1.xlarge m1.large.nodisk m1.xlarge.nodisk m1.large m1.medium m1.tiny m1.small; do openstack flavor set --no-property --property hw:mem_page_size=large $i; done
+  openstack router create --project openshift dualstack
+  openstack network create --project openshift slaac-network
+  openstack subnet create slaac-v6 --project openshift --subnet-range 2001:db8:2222:5555::/64 --network slaac-network --ip-version 6 --ipv6-ra-mode slaac --ipv6-address-mode slaac
+  openstack subnet create slaac-v4 --project openshift --subnet-range 10.197.0.0/16 --network slaac-network
+  openstack router add subnet dualstack slaac-v6
+  openstack router add subnet dualstack slaac-v4
   openstack flavor delete m1.xlarge.nfv
   openstack flavor create --ram 16384 --disk 40 --vcpu 8 --public m1.xlarge.nfv
   openstack flavor set --property hw:cpu_policy=dedicated --property hw:mem_page_size=large m1.xlarge.nfv
