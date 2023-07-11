@@ -14,6 +14,7 @@ standalone_extra_config:
       action: accept
 neutron_bridge_mappings: hostonly:br-hostonly,mellanox-hwoffload:br-hwoffload
 neutron_flat_networks: hostonly,mellanox-hwoffload
+hostonly_v6_cidr: "fd2e:6f44:5dd8:c956::/64"
 kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
 tuned_isolated_cores: 10-23,58-71,34-47,82-95
 extra_heat_params:
@@ -54,6 +55,7 @@ network_config:
     - br-set-external-id br-hostonly bridge-id br-hostonly
     addresses:
       - ip_netmask: 192.168.25.1/24
+      - ip_netmask: fd2e:6f44:5dd8:c956::1/64
     members:
     - type: interface
       name: dummy1
@@ -77,6 +79,7 @@ post_install: |
   export OS_CLOUD=standalone
   openstack network set --name external hostonly
   openstack subnet set --name external-subnet hostonly-subnet
+  openstack subnet set --name external-subnet-v6 hostonly-subnet-v6
   openstack network create --project openshift --share --external --provider-physical-network mellanox-hwoffload --provider-network-type flat mellanox-hwoffload
   openstack subnet create --project openshift mellanox-hwoffload-subnet --subnet-range 192.168.26.0/24 --no-dhcp --gateway 192.168.26.1 --allocation-pool "start=192.168.26.2,end=192.168.26.254" --network mellanox-hwoffload
   for i in m1.xlarge m1.large.nodisk m1.xlarge.nodisk m1.large m1.medium m1.tiny m1.small; do openstack flavor set --no-property --property hw:mem_page_size=large $i; done
