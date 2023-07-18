@@ -89,6 +89,7 @@ post_install: |
   openstack subnet create slaac-v4 --project openshift --subnet-range 10.197.0.0/16 --network slaac-network-v6
   openstack router add subnet dualstack slaac-v6
   openstack router add subnet dualstack slaac-v4
+  openstack router add subnet dualstack external-subnet-v6
   openstack flavor delete m1.xlarge.nfv
   openstack flavor create --ram 16384 --disk 40 --vcpu 8 --public m1.xlarge.nfv
   openstack flavor set --property hw:cpu_policy=dedicated --property hw:mem_page_size=large m1.xlarge.nfv
