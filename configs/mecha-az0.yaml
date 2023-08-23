@@ -1,17 +1,25 @@
 clouddomain: ci.vexxhost.ca
 ceph_devices:
-- /dev/sdc
+  # 894.3 GiB total for Cinder
+  - /dev/disk/by-path/pci-0000:45:00.0-ata-3 # 894.3 GiB
+# https://bugzilla.redhat.com/show_bug.cgi?id=2235819
+# https://support.vexxhost.com/hc/en-us/requests/364632
+# https://support.vexxhost.com/hc/en-us/requests/364694
+# This is because the system see the disks as removable and Ceph
+# will refuse to use them.
+ceph_devices_to_lvm: true
 ephemeral_storage_devices:
-- /dev/sdb
-- /dev/sdd
+  # 1.1 TiB total for Nova instances
+  - /dev/disk/by-path/pci-0000:45:00.0-ata-2 # 223.6 GiB
+  - /dev/disk/by-path/pci-0000:45:00.0-ata-4 # 894.3 GiB
 octavia_enabled: false
 dcn_az: az0
 local_ip: 192.168.24.10
-control_plane_ip: 192.168.24.11
+control_plane_ip: 192.168.24.1
 hostonly_gateway: 192.168.25.2
 hostonly_v6_gateway: 2001:db8::2
 tunnel_remote_ips:
-  - 38.102.83.101
+  - 38.102.83.115
 rhsm_enabled: true
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true

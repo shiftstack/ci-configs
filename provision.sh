@@ -42,7 +42,8 @@ VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY=${VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVAT
 OPENSHIFT_TENANT_PASSWORD=${OPENSHIFT_TENANT_PASSWORD:-}
 SSL_CA_CERT=${SSL_CA_CERT:-}
 SSL_CA_KEY=${SSL_CA_KEY:-}
-REDHAT_REGISTRY_CREDENTIALS=${REDHAT_REGISTRY_CREDENTIALS:-}
+REDHAT_REGISTRY_USERNAME=${REDHAT_REGISTRY_USERNAME:-}
+REDHAT_REGISTRY_PASSWORD=${REDHAT_REGISTRY_PASSWORD:-}
 REDHAT_RHSM_ORG=${REDHAT_RHSM_ORG:-}
 REDHAT_RHSM_ACTIVATION_KEY=${REDHAT_RHSM_ACTIVATION_KEY:-}
 
@@ -51,7 +52,7 @@ REDHAT_RHSM_ACTIVATION_KEY=${REDHAT_RHSM_ACTIVATION_KEY:-}
 ######################
 # Note that defaults are set to use our VEXXHOST cloud
 # but they can be overriden to deploy somewhere else (e.g. PSI)
-IMAGE_NAME=${IMAGE_NAME:-rhel-84-shiftstack-ci}
+IMAGE_NAME=${IMAGE_NAME:-rhel-9.2-x86_64}
 FLAVOR_NAME=${FLAVOR_NAME:-b1-standard-96}
 NETWORK_NAME=${NETWORK_NAME:-public}
 KEYPAIR_NAME=${KEYPAIR_NAME:-shiftstack-ci}
@@ -124,7 +125,7 @@ fi
 
 # Sanity check for CI jobs and locally
 if [ -n "IS_CI" ]; then
-    for i in REDHAT_REGISTRY_CREDENTIALS SSL_CA_CERT SSL_CA_KEY VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY VEXXHOST_ENDPOINT OPENSHIFT_TENANT_PASSWORD; do
+    for i in REDHAT_REGISTRY_USERNAME REDHAT_REGISTRY_PASSWORD SSL_CA_CERT SSL_CA_KEY VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD VEXXHOST_SHIFTSTACK_BM_CI_SSH_PRIVATE_KEY VEXXHOST_ENDPOINT OPENSHIFT_TENANT_PASSWORD; do
        if [ -z "$i" ]; then
            echo "ERROR:$ $i is not set and is required when this script runs in CI"
            exit 1
@@ -200,8 +201,8 @@ if [ -z "$OPENSHIFT_TENANT_PASSWORD" ]; then
     source $ROOT_DIR/secrets/passwords.rc
 fi
 
-# REDHAT_REGISTRY_CREDENTIALS is defined in Github Actions secrets
-if [ -z "$REDHAT_REGISTRY_CREDENTIALS" ]; then
+# REDHAT_REGISTRY_USERNAME is defined in Github Actions secrets
+if [ -z "$REDHAT_REGISTRY_USERNAME" ]; then
     source $ROOT_DIR/secrets/redhat-credentials.rc
 fi
 
@@ -273,7 +274,9 @@ EOF
 if $SSH_CMD grep -q "Red\ Hat" /etc/redhat-release; then
     cat << EOF >> local-overrides.yaml
 rhsm_ephemeral: false
-redhat_registry_credentials: "${REDHAT_REGISTRY_CREDENTIALS}"
+redhat_registry_credentials:
+  username: "${REDHAT_REGISTRY_USERNAME}"
+  password: "${REDHAT_REGISTRY_PASSWORD}"
 rhsm_org_id: "${REDHAT_RHSM_ORG}"
 rhsm_activation_key: "${REDHAT_RHSM_ACTIVATION_KEY}"
 EOF
@@ -284,6 +287,8 @@ if [[ $CLUSTER_NAME == *"az"* ]]; then
     # TODO(Emilien): We need to make it discoverable and not hard-code it but for our current CI this is fine.
     $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data/$CENTRAL_NAME $SERVER_USER@$PUBLIC_IP:/tmp/exported-data
     $SSH_CMD "bash -c 'sudo mv /tmp/exported-data /opt'"
+    $SSH_CMD "bash -c 'mkdir -p ~/.config/openstack && cp /opt/exported-data/clouds.yaml ~/.config/openstack'"
+    $SSH_CMD "bash -c 'sudo mkdir -p /root/.config/openstack && sudo cp /opt/exported-data/clouds.yaml /root/.config/openstack'"
 fi
 
 # Workaround, it doesn't seem to work fine for now when running
@@ -309,6 +314,7 @@ if [[ $CLUSTER_NAME == *"central"* ]]; then
     mkdir -p $ROOT_DIR/secrets/osp-ci/exported-data/
     rm -rf $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME
     $SCP_CMD stack@$PUBLIC_IP:/home/stack/exported-data $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME &>/dev/null
+    $SCP_CMD stack@$PUBLIC_IP:/home/stack/.config/openstack/clouds.yaml $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME/clouds.yaml &>/dev/null
 fi
 
 echo "DEBUG: Cluster $CLUSTER_NAME was successfuly deployed !"
