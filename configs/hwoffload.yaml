@@ -1,9 +1,11 @@
 clouddomain: ci.vexxhost.ca
 ceph_devices:
-  - /dev/sdb
+  # 894.3 GiB total for Cinder
+  - /dev/disk/by-path/pci-0000:46:00.0-ata-3 # 894.3 GiB
 ephemeral_storage_devices:
-  - /dev/sdc
-  - /dev/sdd
+  # 1.1 TiB total for Nova instances
+  - /dev/disk/by-path/pci-0000:46:00.0-ata-2 # 223.6 GiB
+  - /dev/disk/by-path/pci-0000:46:00.0-ata-4 # 894.3 GiB
 rhsm_enabled: true
 standalone_extra_config:
   octavia::wsgi::apache::workers: 4
@@ -94,7 +96,7 @@ post_install: |
   openstack flavor create --ram 16384 --disk 40 --vcpu 8 --public m1.xlarge.nfv
   openstack flavor set --property hw:cpu_policy=dedicated --property hw:mem_page_size=large m1.xlarge.nfv
   openstack flavor create --ram 16384 --disk 40 --vcpu 4 --public m1.xlarge.2
-  openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220302.0.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-20220302.0.x86_64.qcow2 centos9-stream && rm -f CentOS-Stream-GenericCloud-9-20220302.0.x86_64.qcow2
+  openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 centos9-stream && rm -f CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2
   openstack quota set --cores 120 --fixed-ips -1 --injected-file-size -1 --injected-files -1 --instances -1 --key-pairs -1 --properties -1 --ram 450000 --gigabytes 4000 --server-groups -1 --server-group-members -1 --backups -1 --backup-gigabytes -1 --per-volume-gigabytes -1 --snapshots -1 --volumes -1 --floating-ips 80 --secgroup-rules -1 --secgroups -1 --networks -1 --subnets -1 --ports -1 --routers -1 --rbac-policies -1 --subnetpools -1 openshift
   sudo podman create --net=host --name=squid --volume /home/stack/squid/squid.conf:/etc/squid/squid.conf:z --volume /home/stack/squid/htpasswd:/etc/squid/htpasswd:z quay.io/emilien/squid:latest
   sudo podman generate systemd --name squid | sudo tee -a /etc/systemd/system/container-squid.service

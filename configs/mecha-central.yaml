@@ -1,10 +1,18 @@
 clouddomain: ci.vexxhost.ca
 manila_enabled: true
 ceph_devices:
-  - /dev/sdc
+  # 894.3 GiB total for Cinder and Manila
+  - /dev/disk/by-path/pci-0000:45:00.0-ata-3 # 894.3 GiB
+# https://bugzilla.redhat.com/show_bug.cgi?id=2235819
+# https://support.vexxhost.com/hc/en-us/requests/364632
+# https://support.vexxhost.com/hc/en-us/requests/364694
+# This is because the system see the disks as removable and Ceph
+# will refuse to use them.
+ceph_devices_to_lvm: true
 ephemeral_storage_devices:
-  - /dev/sdb
-  - /dev/sdd
+  # 1.1 TiB total for Nova instances
+  - /dev/disk/by-path/pci-0000:45:00.0-ata-2 # 223.6 GiB
+  - /dev/disk/by-path/pci-0000:45:00.0-ata-4 # 894.3 GiB
 dcn_az: central
 swiftoperator_enabled: false
 rhsm_enabled: true
@@ -21,13 +29,14 @@ enabled_services:
 # consumes a lot of load balancers and Octavia is using more than half of the RAM available on the host
 # so we decided to reduce the number of workers to reduce the amount of RAM that will be consumed.
 standalone_extra_config:
-  octavia::wsgi::apache::workers: 4
-  tripleo::firewall::firewall_rules:
+  # This stopped working for some reason, we need to debug
+  octavia::wsgi::apache:workers: 4
+extra_heat_params:
+  ExtraFirewallRules:
     '168 allow squid':
       dport: 3128
       proto: tcp
       action: accept
-extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
 post_install: |
   sudo dnf install -y wget
@@ -35,8 +44,8 @@ post_install: |
   openstack network set --name external hostonly
   openstack subnet set --name external-subnet hostonly-subnet
   openstack network create --external --provider-physical-network external --provider-network-type flat external-proxy
-  openstack subnet create external-proxy-subnet --subnet-range 38.102.83.0/24 --no-dhcp --gateway 38.102.83.1 --allocation-pool "start=38.102.83.81,end=38.102.83.81" --allocation-pool "start=38.102.83.91,end=38.102.83.91" --allocation-pool "start=38.102.83.10,end=38.102.83.10" --allocation-pool "start=38.102.83.78,end="38.102.83.78 --allocation-pool "start=38.102.83.72,end=38.102.83.72" --allocation-pool "start=38.102.83.33,end=38.102.83.33" --allocation-pool "start=38.102.83.105,end=38.102.83.105" --allocation-pool "start=38.102.83.52,end=38.102.83.52"
-  openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220302.0.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-20220302.0.x86_64.qcow2 centos9-stream && rm -ff CentOS-Stream-GenericCloud-9-20220302.0.x86_64.qcow2
+  openstack subnet create external-proxy-subnet --network external-proxy --subnet-range 38.102.83.0/24 --no-dhcp --gateway 38.102.83.1 --allocation-pool "start=38.102.83.81,end=38.102.83.81" --allocation-pool "start=38.102.83.91,end=38.102.83.91" --allocation-pool "start=38.102.83.10,end=38.102.83.10" --allocation-pool "start=38.102.83.78,end="38.102.83.78 --allocation-pool "start=38.102.83.72,end=38.102.83.72" --allocation-pool "start=38.102.83.33,end=38.102.83.33" --allocation-pool "start=38.102.83.105,end=38.102.83.105" --allocation-pool "start=38.102.83.52,end=38.102.83.52"
+  openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 centos9-stream && rm -f CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2
   openstack project delete openshift
   openstack project create openshift-central
   openstack project create openshift-kuryr
