@@ -21,7 +21,7 @@ enabled_services:
 # consumes a lot of load balancers and Octavia is using more than half of the RAM available on the host
 # so we decided to reduce the number of workers to reduce the amount of RAM that will be consumed.
 standalone_extra_config:
-  octavia::wsgi::apache:workers: 4
+  octavia::wsgi::apache::workers: 4
   tripleo::firewall::firewall_rules:
     '168 allow squid':
       dport: 3128
