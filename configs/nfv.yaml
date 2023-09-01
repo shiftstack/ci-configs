@@ -8,7 +8,7 @@ ephemeral_storage_devices:
 swiftoperator_enabled: false
 rhsm_enabled: true
 standalone_extra_config:
-  octavia::wsgi::apache:workers: 4
+  octavia::wsgi::apache::workers: 4
   tripleo::firewall::firewall_rules:
     '168 allow squid':
       dport: 3128
