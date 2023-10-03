@@ -306,7 +306,14 @@ if [[ $CLUSTER_NAME == *"nfv"* ]] || [[ $CLUSTER_NAME == *"hwoffload"* ]] || [[ 
     echo "DEBUG: NFV node detected, copying squid config"
     $SCP_CMD $ROOT_DIR/secrets/squid stack@$PUBLIC_IP: &>/dev/null
 fi
-    
+
+# OSASINFRA-3269 - remove that workaround once OVS is fixed in next zstream
+if [[ $CLUSTER_NAME == *"nfv"* ]]; then   
+    echo "DEBUG: NFV node detected, installing custom OVS for DPDK fixes"
+    $SSH_CMD "mkdir ~/ovs-dpdk"
+    $SCP_CMD $ROOT_DIR/secrets/ovs-dpdk/* stack@$PUBLIC_IP:ovs-dpdk &>/dev/null
+fi
+
 make post_install
 
 if [[ $CLUSTER_NAME == *"central"* ]]; then
