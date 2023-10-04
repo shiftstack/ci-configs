@@ -7,26 +7,27 @@ ephemeral_storage_devices:
   # 1.1 TiB total for Nova instances
   - /dev/disk/by-path/pci-0000:46:00.0-ata-2 # 223.6 GiB
   - /dev/disk/by-path/pci-0000:46:00.0-ata-4 # 894.3 GiB
+# https://bugzilla.redhat.com/show_bug.cgi?id=2235819
+# https://support.vexxhost.com/hc/en-us/requests/364632
+# https://support.vexxhost.com/hc/en-us/requests/364694
+# This is because the system see the disks as removable and Ceph
+# will refuse to use them.
+ceph_devices_to_lvm: true
 swiftoperator_enabled: false
 rhsm_enabled: true
 standalone_extra_config:
   octavia::wsgi::apache::workers: 4
-  tripleo::firewall::firewall_rules:
-    '168 allow squid':
-      dport: 3128
-      proto: tcp
-      action: accept
 neutron_bridge_mappings: hostonly:br-hostonly,mellanox-dpdk:br-mlx-dpdk
 neutron_flat_networks: hostonly,hostonly-sriov,mellanox-sriov,mellanox-dpdk
-neutron_physical_dev_mappings: hostonly-sriov:enp129s0f1,mellanox-sriov:enp161s0f1
-sriov_interface: enp129s0f1
+neutron_physical_dev_mappings: hostonly-sriov:enp129s0f1np1,mellanox-sriov:enp161s0f1np1
+sriov_interface: enp129s0f1np1
 sriov_nova_pci_passthrough:
-  - devname: "enp129s0f1"
+  - devname: "enp129s0f1np1"
     physical_network: "hostonly-sriov"
-  - devname: "enp161s0f1"
+  - devname: "enp161s0f1np1"
     physical_network: "mellanox-sriov"
 sriov_nic_numvfs: 8
-dpdk_interface: enp129s0f0
+dpdk_interface: enp129s0f0np0
 kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
 tuned_isolated_cores: 10-23,58-71,34-47,82-95
 extra_heat_params:
@@ -35,6 +36,11 @@ extra_heat_params:
   NovaComputeCpuSharedSet: "0-9,48-57,24-33,72-81"
   OvsDpdkSocketMemory: "2048,2048"
   OvsPmdCoreList: "10,34"
+  ExtraFirewallRules:
+    '168 allow squid':
+      dport: 3128
+      proto: tcp
+      action: insert
 network_config:
   - type: interface
     name: dummy0
@@ -74,9 +80,9 @@ network_config:
       driver: mlx5_core
       members:
       - type: interface
-        name: enp161s0f0
+        name: enp161s0f0np0
   - type: sriov_pf
-    name: enp129s0f1
+    name: enp129s0f1np1
     use_dhcp: false
     numvfs: 8
     defroute: false
@@ -86,7 +92,7 @@ network_config:
     addresses:
     - ip_netmask: 192.168.26.1/24
   - type: sriov_pf
-    name: enp161s0f1
+    name: enp161s0f1np1
     use_dhcp: false
     numvfs: 8
     defroute: false
@@ -98,6 +104,7 @@ network_config:
 post_install: |
   sudo dnf install -y wget
   export OS_CLOUD=standalone
+  openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 centos9-stream && rm -f CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2
   openstack network set --name intel-sriov hostonly-sriov
   openstack subnet set --name intel-sriov-subnet hostonly-sriov-subnet
   openstack network set --name intel-dpdk hostonly
