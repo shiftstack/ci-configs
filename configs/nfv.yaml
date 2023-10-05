@@ -19,15 +19,15 @@ standalone_extra_config:
   octavia::wsgi::apache::workers: 4
 neutron_bridge_mappings: hostonly:br-hostonly,mellanox-dpdk:br-mlx-dpdk
 neutron_flat_networks: hostonly,hostonly-sriov,mellanox-sriov,mellanox-dpdk
-neutron_physical_dev_mappings: hostonly-sriov:enp129s0f1np1,mellanox-sriov:enp161s0f1np1
+neutron_physical_dev_mappings: hostonly-sriov:enp193s0f1,mellanox-sriov:enp161s0f1np1
 sriov_interface: enp129s0f1np1
 sriov_nova_pci_passthrough:
-  - devname: "enp129s0f1np1"
+  - devname: "enp193s0f1"
     physical_network: "hostonly-sriov"
   - devname: "enp161s0f1np1"
     physical_network: "mellanox-sriov"
 sriov_nic_numvfs: 8
-dpdk_interface: enp129s0f0np0
+dpdk_interface: enp193s0f0
 kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
 tuned_isolated_cores: 10-23,58-71,34-47,82-95
 extra_heat_params:
@@ -62,7 +62,7 @@ network_config:
       rx_queue: 1
       members:
       - type: interface
-        name: enp65s0f0
+        name: enp193s0f0
   - type: ovs_user_bridge
     name: br-mlx-dpdk
     use_dhcp: false
@@ -82,7 +82,7 @@ network_config:
       - type: interface
         name: enp161s0f0np0
   - type: sriov_pf
-    name: enp129s0f1np1
+    name: enp193s0f1
     use_dhcp: false
     numvfs: 8
     defroute: false
