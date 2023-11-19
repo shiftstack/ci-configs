@@ -296,7 +296,13 @@ fi
 echo "DEBUG: Upgrading the server to CentOS Stream..."
 $SSH_CMD "if test -f /etc/centos-release; then rpm --query centos-stream-release || bash -c 'sudo dnf -y swap centos-linux-repos centos-stream-repos && sudo dnf -y distro-sync'; fi"
 echo "DEBUG: Run dev-install to deploy OpenStack on $CLUSTER_NAME..."
-MAKE_TARGETS="local_requirements prepare_host network install_stack"
+
+# Prepare the host for the deployment
+make local_requirements prepare_host
+rm -f inventory.yaml
+make config host=$PUBLIC_IP user=stack &>/dev/null
+
+MAKE_TARGETS="network install_stack"
 if [[ $CLUSTER_NAME != *"az"* ]]; then
     MAKE_TARGETS="${MAKE_TARGETS} prepare_stack local_os_client"
 fi
