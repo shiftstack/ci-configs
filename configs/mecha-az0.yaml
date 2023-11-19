@@ -19,7 +19,7 @@ control_plane_ip: 192.168.24.1
 hostonly_gateway: 192.168.25.2
 hostonly_v6_gateway: 2001:db8::2
 tunnel_remote_ips:
-  - 38.102.83.182
+  - 38.102.83.39
 rhsm_enabled: true
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
