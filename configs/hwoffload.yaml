@@ -45,6 +45,7 @@ extra_heat_params:
   KeystoneDebug: true
   NeutronDebug: true
   NovaDebug: true
+  ManilaDebug: true
   OctaviaDebug: true
 network_config:
   - type: ovs_bridge
