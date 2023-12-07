@@ -46,6 +46,7 @@ extra_heat_params:
   KeystoneDebug: true
   NeutronDebug: true
   NovaDebug: true
+  ManilaDebug: true
   OctaviaDebug: true
 post_install: |
   sudo dnf install -y wget
