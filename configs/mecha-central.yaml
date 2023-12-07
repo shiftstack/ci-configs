@@ -38,6 +38,15 @@ extra_heat_params:
       proto: tcp
       action: insert
   CinderRbdFlattenVolumeFromSnapshot: true
+  # Turn off debug
+  Debug: false
+  # But restore debug for the services we care about
+  CinderDebug: true
+  GlanceDebug: true
+  KeystoneDebug: true
+  NeutronDebug: true
+  NovaDebug: true
+  OctaviaDebug: true
 post_install: |
   sudo dnf install -y wget
   export OS_CLOUD=standalone

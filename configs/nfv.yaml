@@ -41,6 +41,15 @@ extra_heat_params:
       dport: 3128
       proto: tcp
       action: insert
+  # Turn off debug
+  Debug: false
+  # But restore debug for the services we care about
+  CinderDebug: true
+  GlanceDebug: true
+  KeystoneDebug: true
+  NeutronDebug: true
+  NovaDebug: true
+  OctaviaDebug: true
 network_config:
   - type: interface
     name: dummy0
