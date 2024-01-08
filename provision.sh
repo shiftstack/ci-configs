@@ -138,13 +138,6 @@ else
    fi
 fi
 
-if [[ $CLUSTER_NAME == *"az"* ]]; then
-    if [ -z "$CENTRAL_NAME" ]; then
-        echo "CENTRAL_NAME has to be defined when deploying additional nodes in a specific AZ"
-        exit 1
-    fi
-fi
-
 # Initialize secrets
 # All variables are defined in Github Actions secrets
 if [ -n "$VEXXHOST_SHIFTSTACK_BM_CI_PASSWORD" ]; then
@@ -282,15 +275,6 @@ rhsm_activation_key: "${REDHAT_RHSM_ACTIVATION_KEY}"
 EOF
 fi
 
-if [[ $CLUSTER_NAME == *"az"* ]]; then
-    echo "DEBUG: AZ node detected, copying central config into /opt/exported-data"
-    # TODO(Emilien): We need to make it discoverable and not hard-code it but for our current CI this is fine.
-    $SCP_CMD $ROOT_DIR/secrets/osp-ci/exported-data/$CENTRAL_NAME $SERVER_USER@$PUBLIC_IP:/tmp/exported-data
-    $SSH_CMD "bash -c 'sudo mv /tmp/exported-data /opt'"
-    $SSH_CMD "bash -c 'mkdir -p ~/.config/openstack && cp /opt/exported-data/clouds.yaml ~/.config/openstack'"
-    $SSH_CMD "bash -c 'sudo mkdir -p /root/.config/openstack && sudo cp /opt/exported-data/clouds.yaml /root/.config/openstack'"
-fi
-
 # Workaround, it doesn't seem to work fine for now when running
 # the Ansible task that does it in dev-install from Github CI
 echo "DEBUG: Upgrading the server to CentOS Stream..."
@@ -302,14 +286,11 @@ make local_requirements prepare_host
 rm -f inventory.yaml
 make config host=$PUBLIC_IP user=stack &>/dev/null
 
-MAKE_TARGETS="network install_stack"
-if [[ $CLUSTER_NAME != *"az"* ]]; then
-    MAKE_TARGETS="${MAKE_TARGETS} prepare_stack local_os_client"
-fi
+MAKE_TARGETS="network install_stack prepare_stack local_os_client"
 make $MAKE_TARGETS
 
-if [[ $CLUSTER_NAME == *"nfv"* ]] || [[ $CLUSTER_NAME == *"hwoffload"* ]] || [[ $CLUSTER_NAME == *"mecha-central"* ]]; then
-    echo "DEBUG: NFV node detected, copying squid config"
+if grep -q "podman create .*squid" "$ROOT_DIR/configs/$CLUSTER_NAME.yaml"; then
+    echo "DEBUG: proxy node detected, copying squid config"
     $SCP_CMD $ROOT_DIR/secrets/squid stack@$PUBLIC_IP: &>/dev/null
 fi
 
@@ -322,23 +303,8 @@ fi
 
 make post_install
 
-if [[ $CLUSTER_NAME == *"central"* ]]; then
-    echo "DEBUG: DCN central node detected, collecting central config into secrets"
-    mkdir -p $ROOT_DIR/secrets/osp-ci/exported-data/
-    rm -rf $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME
-    $SCP_CMD stack@$PUBLIC_IP:/home/stack/exported-data $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME &>/dev/null
-    $SCP_CMD stack@$PUBLIC_IP:/home/stack/.config/openstack/clouds.yaml $ROOT_DIR/secrets/osp-ci/exported-data/$CLUSTER_NAME/clouds.yaml &>/dev/null
-fi
-
 echo "DEBUG: Cluster $CLUSTER_NAME was successfuly deployed !"
 cd ..
-
-if [[ $CLUSTER_NAME == *"az"* ]]; then
-    echo "DEBUG: AZ node detected, you'll need to update OVS tunnels on central node"
-    echo "ssh stack@<node>"
-    echo "<your favorite text editor> dev-install_net_config.yaml and add the block for OVS tunnels"
-    echo "sudo os-net-config -c dev-install_net_config.yaml"
-fi
 
 if [ -n "$IS_CI" ]; then
     echo "DEBUG: Destruction of $CLUSTER_NAME..."
