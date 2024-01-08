@@ -1,6 +1,7 @@
 clouddomain: ci.vexxhost.ca
+manila_enabled: true
 ceph_devices:
-  # 894.3 GiB total for Cinder
+  # 894.3 GiB total for Cinder and Manila
   - /dev/disk/by-path/pci-0000:45:00.0-ata-3 # 894.3 GiB
 # https://bugzilla.redhat.com/show_bug.cgi?id=2235819
 # https://support.vexxhost.com/hc/en-us/requests/364632
@@ -12,16 +13,29 @@ ephemeral_storage_devices:
   # 1.1 TiB total for Nova instances
   - /dev/disk/by-path/pci-0000:45:00.0-ata-2 # 223.6 GiB
   - /dev/disk/by-path/pci-0000:45:00.0-ata-4 # 894.3 GiB
-octavia_enabled: false
-dcn_az: az0
-local_ip: 192.168.24.10
-control_plane_ip: 192.168.24.1
-hostonly_gateway: 192.168.25.2
-hostonly_v6_gateway: 2001:db8::2
-tunnel_remote_ips:
-  - 38.102.83.39
+swiftoperator_enabled: false
 rhsm_enabled: true
+hostonly_fip_pool_start: 192.168.25.10
+hostonly_v6_fip_pool_start: 2001:db8::10
+enabled_services:
+  - /usr/share/openstack-tripleo-heat-templates/environments/disable-swift.yaml
+# OpenStack API runnings under WSGI have a common function to calculate the number of workers:
+# The value for os_workers is max between '(<# processors> / 2)' and '2' with
+# a cap of 12.
+# https://opendev.org/openstack/puppet-openstacklib/src/commit/495701901eabb24d28f2a2276275e1c1537133c1/lib/facter/os_workers.rb#L37-L38
+# On vexxhost machines, we have 96 cores, so each API can create up to 12 workers.
+# This has been problematic for us when deploying OpenShift with Kuryr which
+# consumes a lot of load balancers and Octavia is using more than half of the RAM available on the host
+# so we decided to reduce the number of workers to reduce the amount of RAM that will be consumed.
+standalone_extra_config:
+  # This stopped working for some reason, we need to debug
+  octavia::wsgi::apache:workers: 4
 extra_heat_params:
+  ExtraFirewallRules:
+    '168 allow squid':
+      dport: 3128
+      proto: tcp
+      action: insert
   CinderRbdFlattenVolumeFromSnapshot: true
   # Turn off debug
   Debug: false
@@ -33,3 +47,16 @@ extra_heat_params:
   NovaDebug: true
   ManilaDebug: true
   OctaviaDebug: true
+post_install: |
+  sudo dnf install -y wget
+  export OS_CLOUD=standalone
+  openstack network set --name external hostonly
+  openstack subnet set --name external-subnet hostonly-subnet
+  openstack network create --external --provider-physical-network external --provider-network-type flat external-proxy
+  openstack subnet create external-proxy-subnet --network external-proxy --subnet-range 38.102.83.0/24 --no-dhcp --gateway 38.102.83.1 --allocation-pool "start=38.102.83.242,end=38.102.83.242" --allocation-pool "start=38.102.83.229,end=38.102.83.229" --allocation-pool "start=38.102.83.149,end=38.102.83.149" --allocation-pool "start=38.102.83.208,end=38.102.83.208" --allocation-pool "start=38.102.83.31,end=38.102.83.31"
+  openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 centos9-stream && rm -f CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2
+  openstack flavor create --ram 16384 --disk 40 --vcpu 4 --ephemeral 10 --public m1.xlarge.2
+  openstack quota set --cores 120 --fixed-ips -1 --injected-file-size -1 --injected-files -1 --instances -1 --key-pairs -1 --properties -1 --ram 450000 --gigabytes 4000 --server-groups -1 --server-group-members -1 --backups -1 --backup-gigabytes -1 --per-volume-gigabytes -1 --snapshots -1 --volumes -1 --floating-ips 80 --secgroup-rules -1 --secgroups -1 --networks -1 --subnets -1 --ports -1 --routers -1 --rbac-policies -1 --subnetpools -1 openshift
+  sudo podman create --net=host --name=squid --volume /home/stack/squid/squid.conf:/etc/squid/squid.conf:z --volume /home/stack/squid/htpasswd:/etc/squid/htpasswd:z quay.io/emilien/squid:latest
+  sudo podman generate systemd --name squid | sudo tee -a /etc/systemd/system/container-squid.service
+  sudo systemctl enable --now container-squid
