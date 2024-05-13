@@ -32,7 +32,7 @@ extra_heat_params:
       action: insert
   OvsHwOffload: True
   NovaPCIPassthrough:
-    - devname: "enp161s0f0"
+    - devname: "enp161s0f0np0"
       physical_network: "mellanox-hwoffload"
   NovaComputeCpuDedicatedSet: "10-23,58-71,34-47,82-95"
   NovaReservedHostMemory: 4096
@@ -88,7 +88,7 @@ network_config:
     use_dhcp: false
     mtu: 9000
     members:
-    - name: enp161s0f0
+    - name: enp161s0f0np0
       type: sriov_pf
       use_dhcp: false
       link_mode: switchdev
