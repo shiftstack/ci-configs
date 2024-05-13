@@ -6,20 +6,27 @@ ephemeral_storage_devices:
   # 1.1 TiB total for Nova instances
   - /dev/disk/by-path/pci-0000:46:00.0-ata-2 # 223.6 GiB
   - /dev/disk/by-path/pci-0000:46:00.0-ata-4 # 894.3 GiB
+# https://bugzilla.redhat.com/show_bug.cgi?id=2235819
+# https://support.vexxhost.com/hc/en-us/requests/364632
+# https://support.vexxhost.com/hc/en-us/requests/364694
+# This is because the system see the disks as removable and Ceph
+# will refuse to use them.
+ceph_devices_to_lvm: true
+swiftoperator_enabled: false
 rhsm_enabled: true
 standalone_extra_config:
   octavia::wsgi::apache::workers: 4
-  tripleo::firewall::firewall_rules:
-    '168 allow squid':
-      dport: 3128
-      proto: tcp
-      action: accept
 neutron_bridge_mappings: hostonly:br-hostonly,mellanox-hwoffload:br-hwoffload
 neutron_flat_networks: hostonly,mellanox-hwoffload
 hostonly_v6_cidr: "fd2e:6f44:5dd8:c956::/64"
 kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
 tuned_isolated_cores: 10-23,58-71,34-47,82-95
 extra_heat_params:
+  ExtraFirewallRules:
+    '168 allow squid':
+      dport: 3128
+      proto: tcp
+      action: insert
   OvsHwOffload: True
   NovaPCIPassthrough:
     - devname: "enp161s0f0"
