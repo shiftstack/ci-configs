@@ -33,6 +33,7 @@ dpdk_interface: enp193s0f0
 kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
 tuned_isolated_cores: 10-23,58-71,34-47,82-95
 extra_heat_params:
+  CinderRbdFlattenVolumeFromSnapshot: true
   NovaComputeCpuDedicatedSet: "10-23,58-71,34-47,82-95"
   NovaReservedHostMemory: 4096
   NovaComputeCpuSharedSet: "0-9,48-57,24-33,72-81"
