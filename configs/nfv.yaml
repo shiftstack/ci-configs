@@ -133,6 +133,3 @@ post_install: |
   sudo podman create --net=host --name=squid --volume /home/stack/squid/squid.conf:/etc/squid/squid.conf:z --volume /home/stack/squid/htpasswd:/etc/squid/htpasswd:z quay.io/emilien/squid:latest
   sudo podman generate systemd --name squid | sudo tee -a /etc/systemd/system/container-squid.service
   sudo systemctl enable --now container-squid
-  # OSASINFRA-3269 - remove that workaround once OVS is fixed in next zstream
-  cd ~/ovs-dpdk && sudo dnf install -y *.rpm
-  ( sleep 60 ; sudo reboot ) &
