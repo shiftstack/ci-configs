@@ -23,6 +23,10 @@ neutron_flat_networks: hostonly,mellanox-hwoffload
 hostonly_v6_cidr: "fd2e:6f44:5dd8:c956::/64"
 kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
 tuned_isolated_cores: 10-23,58-71,34-47,82-95
+neutron_mtu: 1450
+ctlplane_mtu: 1500
+hostonly_mtu: 1500
+public_mtu: 1500
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
   ExtraFirewallRules:
