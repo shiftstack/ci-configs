@@ -12,7 +12,7 @@ ephemeral_storage_devices:
 # This is because the system see the disks as removable and Ceph
 # will refuse to use them.
 ceph_devices_to_lvm: true
-swiftoperator_enabled: false
+swiftoperator_enabled: true
 rhsm_enabled: true
 standalone_extra_config:
   octavia::wsgi::apache::workers: 4
