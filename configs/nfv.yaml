@@ -14,8 +14,6 @@ ephemeral_storage_devices:
 # will refuse to use them.
 ceph_devices_to_lvm: true
 swiftoperator_enabled: false
-enabled_services:
-  - /usr/share/openstack-tripleo-heat-templates/environments/disable-swift.yaml
 rhsm_enabled: true
 standalone_extra_config:
   octavia::wsgi::apache::workers: 4
