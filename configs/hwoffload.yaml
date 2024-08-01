@@ -16,11 +16,9 @@ swiftoperator_enabled: true
 rhsm_enabled: true
 standalone_extra_config:
   octavia::wsgi::apache::workers: 4
-neutron_bridge_mappings: hostonly:br-hostonly,mellanox-hwoffload:br-hwoffload
-neutron_flat_networks: hostonly,mellanox-hwoffload
+neutron_bridge_mappings: hostonly:br-hostonly
+neutron_flat_networks: hostonly
 hostonly_v6_cidr: "fd2e:6f44:5dd8:c956::/64"
-kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
-tuned_isolated_cores: 10-23,58-71,34-47,82-95
 neutron_mtu: 1450
 ctlplane_mtu: 1500
 hostonly_mtu: 1500
@@ -32,24 +30,6 @@ extra_heat_params:
       dport: 3128
       proto: tcp
       action: insert
-  OvsHwOffload: True
-  NovaPCIPassthrough:
-    - devname: "enp161s0f0np0"
-      physical_network: "mellanox-hwoffload"
-  NovaComputeCpuDedicatedSet: "10-23,58-71,34-47,82-95"
-  NovaReservedHostMemory: 4096
-  NovaComputeCpuSharedSet: "0-9,48-57,24-33,72-81"
-  NeutronApiPolicies:
-    operator_create_binding_profile:
-      key: 'create_port:binding:profile'
-      value: 'rule:admin_or_network_owner'
-    operator_get_binding_profile:
-      key: 'get_port:binding:profile'
-      value: 'rule:admin_or_network_owner'
-    operator_update_binding_profile:
-      key: 'update_port:binding:profile'
-      value: 'rule:admin_or_network_owner'
-  # Turn off debug
   Debug: false
   # But restore debug for the services we care about
   CinderDebug: true
@@ -85,27 +65,12 @@ network_config:
       name: dummy1
       nm_controlled: true
       mtu: 1500
-  - name: br-hwoffload
-    type: ovs_bridge
-    use_dhcp: false
-    mtu: 9000
-    members:
-    - name: enp161s0f0np0
-      type: sriov_pf
-      use_dhcp: false
-      link_mode: switchdev
-      numvfs: 8
-      promisc: true
-    ovs_extra:
-    - br-set-external-id br-hwoffload bridge-id br-hwoffload
 post_install: |
   sudo dnf install -y wget
   export OS_CLOUD=standalone
   openstack network set --name external hostonly
   openstack subnet set --name external-subnet hostonly-subnet
   openstack subnet set --name external-subnet-v6 hostonly-subnet-v6
-  openstack network create --project openshift --share --external --provider-physical-network mellanox-hwoffload --provider-network-type flat mellanox-hwoffload
-  openstack subnet create --project openshift mellanox-hwoffload-subnet --subnet-range 192.168.26.0/24 --no-dhcp --gateway 192.168.26.1 --allocation-pool "start=192.168.26.2,end=192.168.26.254" --network mellanox-hwoffload
   for i in m1.xlarge m1.large.nodisk m1.xlarge.nodisk m1.large m1.medium m1.tiny m1.small; do openstack flavor set --no-property --property hw:mem_page_size=large $i; done
   openstack router create --project openshift --tag shiftstack-prune=keep dualstack
   openstack network create --project openshift --tag shiftstack-prune=keep slaac-network-v6
@@ -114,9 +79,6 @@ post_install: |
   openstack router add subnet dualstack slaac-v6
   openstack router add subnet dualstack slaac-v4
   openstack router set --external-gateway external dualstack
-  openstack flavor delete m1.xlarge.nfv
-  openstack flavor create --ram 16384 --disk 40 --vcpu 8 --public m1.xlarge.nfv
-  openstack flavor set --property hw:cpu_policy=dedicated --property hw:mem_page_size=large m1.xlarge.nfv
   openstack flavor create --ram 16384 --disk 40 --vcpu 4 --public m1.xlarge.2
   openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 centos9-stream && rm -f CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2
   openstack quota set --cores 120 --fixed-ips -1 --injected-file-size -1 --injected-files -1 --instances -1 --key-pairs -1 --properties -1 --ram 450000 --gigabytes 4000 --server-groups -1 --server-group-members -1 --backups -1 --backup-gigabytes -1 --per-volume-gigabytes -1 --snapshots -1 --volumes -1 --floating-ips 80 --secgroup-rules -1 --secgroups -1 --networks -1 --subnets -1 --ports -1 --routers -1 --rbac-policies -1 --subnetpools -1 openshift
