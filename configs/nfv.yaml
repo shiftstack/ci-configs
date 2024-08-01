@@ -28,15 +28,15 @@ sriov_nova_pci_passthrough:
     physical_network: "mellanox-sriov"
 sriov_nic_numvfs: 8
 dpdk_interface: enp193s0f0
-kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
-tuned_isolated_cores: 10-23,58-71,34-47,82-95
+kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=15-23,63-71,39-47,87-95"
+tuned_isolated_cores: 15-23,63-71,39-47,87-95
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
-  NovaComputeCpuDedicatedSet: "10-23,58-71,34-47,82-95"
+  NovaComputeCpuDedicatedSet: "16-23,63-71,40-47,87-95"
   NovaReservedHostMemory: 4096
-  NovaComputeCpuSharedSet: "0-9,48-57,24-33,72-81"
+  NovaComputeCpuSharedSet: "0-14,48-62,24-38,72-86"
   OvsDpdkSocketMemory: "2048,2048"
-  OvsPmdCoreList: "10,34"
+  OvsPmdCoreList: "15,38"
   ExtraFirewallRules:
     '168 allow squid':
       dport: 3128
