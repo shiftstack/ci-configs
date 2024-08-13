@@ -71,7 +71,6 @@ post_install: |
   openstack network set --name external hostonly
   openstack subnet set --name external-subnet hostonly-subnet
   openstack subnet set --name external-subnet-v6 hostonly-subnet-v6
-  for i in m1.xlarge m1.large.nodisk m1.xlarge.nodisk m1.large m1.medium m1.tiny m1.small; do openstack flavor set --no-property --property hw:mem_page_size=large $i; done
   openstack router create --project openshift --tag shiftstack-prune=keep dualstack
   openstack network create --project openshift --tag shiftstack-prune=keep slaac-network-v6
   openstack subnet create slaac-v6 --project openshift --tag shiftstack-prune=keep --subnet-range 2001:db8:2222:5555::/64 --network slaac-network-v6 --ip-version 6 --ipv6-ra-mode slaac --ipv6-address-mode slaac
