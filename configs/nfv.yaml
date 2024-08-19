@@ -29,7 +29,7 @@ sriov_nova_pci_passthrough:
 sriov_nic_numvfs: 8
 dpdk_interface: enp193s0f0
 kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=15-23,63-71,39-47,87-95"
-tuned_isolated_cores: 15-23,63-71,39-47,87-95
+tuned_isolated_cores: 15-23,64-71,39-47,88-95
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
   NovaComputeCpuDedicatedSet: "16-23,64-71,40-47,88-95"
