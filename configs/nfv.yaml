@@ -32,9 +32,9 @@ kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_io
 tuned_isolated_cores: 15-23,63-71,39-47,87-95
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
-  NovaComputeCpuDedicatedSet: "16-23,63-71,40-47,87-95"
+  NovaComputeCpuDedicatedSet: "16-23,64-71,40-47,88-95"
   NovaReservedHostMemory: 4096
-  NovaComputeCpuSharedSet: "0-14,48-62,24-38,72-86"
+  NovaComputeCpuSharedSet: "0-14,48-63,24-38,72-87"
   OvsDpdkSocketMemory: "2048,2048"
   OvsPmdCoreList: "15,39"
   ExtraFirewallRules:
