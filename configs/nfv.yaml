@@ -36,7 +36,7 @@ extra_heat_params:
   NovaReservedHostMemory: 4096
   NovaComputeCpuSharedSet: "0-14,48-62,24-38,72-86"
   OvsDpdkSocketMemory: "2048,2048"
-  OvsPmdCoreList: "15,38"
+  OvsPmdCoreList: "15,39"
   ExtraFirewallRules:
     '168 allow squid':
       dport: 3128
