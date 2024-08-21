@@ -28,15 +28,27 @@ sriov_nova_pci_passthrough:
     physical_network: "mellanox-sriov"
 sriov_nic_numvfs: 8
 dpdk_interface: enp193s0f0
-kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=420 iommu=pt amd_iommu=on isolcpus=10-23,58-71,34-47,82-95"
-tuned_isolated_cores: 10-23,58-71,34-47,82-95
+# We split cores between different pools like so:
+#
+#  0-14: vCPUs
+#    15: OVS-DPDK
+# 16-23: pCPUs
+# 24-38: vCPUs
+#    39: OVS-DPDK
+# 40-47: pCPUs
+# 48-63: vCPUs
+# 64-71: pCPUs
+# 72-87: vCPUs
+# 88-95: pCPUs
+kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=68 iommu=pt amd_iommu=on isolcpus=15-23,64-71,39-47,88-95"
+tuned_isolated_cores: 15-23,64-71,39-47,88-95
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
-  NovaComputeCpuDedicatedSet: "10-23,58-71,34-47,82-95"
+  NovaComputeCpuDedicatedSet: "16-23,64-71,40-47,88-95"
   NovaReservedHostMemory: 4096
-  NovaComputeCpuSharedSet: "0-9,48-57,24-33,72-81"
+  NovaComputeCpuSharedSet: "0-14,48-63,24-38,72-87"
   OvsDpdkSocketMemory: "2048,2048"
-  OvsPmdCoreList: "10,34"
+  OvsPmdCoreList: "15,39"
   ExtraFirewallRules:
     '168 allow squid':
       dport: 3128
