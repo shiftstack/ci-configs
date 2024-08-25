@@ -40,7 +40,7 @@ dpdk_interface: enp193s0f0
 # 64-71: pCPUs
 # 72-87: vCPUs
 # 88-95: pCPUs
-kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=68 iommu=pt amd_iommu=on isolcpus=15-23,64-71,39-47,88-95"
+kernel_args: "default_hugepagesz=1GB hugepagesz=1G hugepages=324 iommu=pt amd_iommu=on isolcpus=15-23,64-71,39-47,88-95"
 tuned_isolated_cores: 15-23,64-71,39-47,88-95
 extra_heat_params:
   CinderRbdFlattenVolumeFromSnapshot: true
