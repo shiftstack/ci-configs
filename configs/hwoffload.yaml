@@ -30,6 +30,14 @@ extra_heat_params:
       dport: 3128
       proto: tcp
       action: insert
+    '169 allow openstack-proxy':
+      dport: 13001
+      proto: tcp
+      action: insert
+    '170 allow dnsmasq':
+      dport: 53
+      proto: udp
+      action: insert
   Debug: false
   # But restore debug for the services we care about
   CinderDebug: true
@@ -71,6 +79,7 @@ post_install: |
   openstack network set --name external hostonly
   openstack subnet set --name external-subnet hostonly-subnet
   openstack subnet set --name external-subnet-v6 hostonly-subnet-v6
+  openstack subnet set --dns-nameserver fd2e:6f44:5dd8:c956::1 external-subnet-v6
   openstack router create --project openshift --tag shiftstack-prune=keep dualstack
   openstack network create --project openshift --tag shiftstack-prune=keep slaac-network-v6
   openstack subnet create slaac-v6 --project openshift --tag shiftstack-prune=keep --subnet-range 2001:db8:2222:5555::/64 --network slaac-network-v6 --ip-version 6 --ipv6-ra-mode slaac --ipv6-address-mode slaac
@@ -79,8 +88,34 @@ post_install: |
   openstack router add subnet dualstack slaac-v4
   openstack router set --external-gateway external dualstack
   openstack flavor create --ram 16384 --disk 40 --vcpu 4 --public m1.xlarge.2
+  # for mirror registry we need more space
+  openstack flavor delete m1.small
+  openstack flavor create --ram 2048 --disk 50 --vcpu 1 --ephemeral 1 --public m1.small
   openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 centos9-stream && rm -f CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2
   openstack quota set --cores 120 --fixed-ips -1 --injected-file-size -1 --injected-files -1 --instances -1 --key-pairs -1 --properties -1 --ram 450000 --gigabytes 4000 --server-groups -1 --server-group-members -1 --backups -1 --backup-gigabytes -1 --per-volume-gigabytes -1 --snapshots -1 --volumes -1 --floating-ips 80 --secgroup-rules -1 --secgroups -1 --networks -1 --subnets -1 --ports -1 --routers -1 --rbac-policies -1 --subnetpools -1 openshift
   sudo podman create --net=host --name=squid --volume /home/stack/squid/squid.conf:/etc/squid/squid.conf:z --volume /home/stack/squid/htpasswd:/etc/squid/htpasswd:z quay.io/emilien/squid:latest
   sudo podman generate systemd --name squid | sudo tee -a /etc/systemd/system/container-squid.service
   sudo systemctl enable --now container-squid
+  sudo wget -O /usr/sbin/openstack-proxy https://github.com/pierreprinetti/openstack-proxy/releases/download/v2.1.1/openstack-proxy
+  sudo chmod +x /usr/sbin/openstack-proxy
+  sudo tee /etc/systemd/system/openstack-proxy.service << EOF > /dev/null
+  [Unit]
+  Description=openstack-proxy service
+  After=network-online.target
+  [Service]
+  ExecStart=/usr/sbin/openstack-proxy --url https://[fd2e:6f44:5dd8:c956::1]:13001 --cert /etc/pki/tls/private/overcloud_endpoint.pem --key /etc/pki/tls/private/overcloud_endpoint.pem
+  Environment="OS_CLOUD=openstack" "OS_CLIENT_CONFIG_FILE=/home/stack/clouds.yaml"
+  [Install]
+  WantedBy=multi-user.target
+  EOF
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now openstack-proxy
+  sudo dnf install -y dnsmasq
+  sudo tee /etc/dnsmasq.conf << EOF > /dev/null
+  port=53
+  user=dnsmasq
+  group=dnsmasq
+  bind-interfaces
+  interface=br-hostonly
+  EOF
+  sudo systemctl enable --now dnsmasq
