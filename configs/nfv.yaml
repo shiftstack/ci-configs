@@ -175,4 +175,4 @@ post_install: |
     curl -X POST -H 'Content-type: application/json' --data '{"text": "'"${MESSAGE}"'"}' https://hooks.slack.com/services//THE/TOKENIZED/URL
   fi
   EOF
-  (crontab -l 2>/dev/null; echo "*/10 * * * * remove_trunks.sh") | crontab -
+  (crontab -l 2>/dev/null; echo "*/10 * * * * $HOME/remove_trunks.sh") | crontab -
