@@ -136,7 +136,7 @@ post_install: |
   openstack subnet create --project openshift mellanox-sriov-subnet --subnet-range 192.168.27.0/24 --no-dhcp --gateway 192.168.27.1 --allocation-pool "start=192.168.27.2,end=192.168.27.254" --network mellanox-sriov
   openstack network create --project openshift --share --external --provider-physical-network mellanox-dpdk --provider-network-type flat mellanox-dpdk
   openstack subnet create --project openshift mellanox-dpdk-subnet --subnet-range 192.168.28.0/24 --dhcp --gateway 192.168.28.1 --allocation-pool "start=192.168.28.2,end=192.168.28.254" --network mellanox-dpdk
-  for i in m1.xlarge m1.large.nodisk m1.xlarge.nodisk m1.large m1.medium m1.tiny m1.small; do openstack flavor set --no-property --property hw:mem_page_size=large $i; done
+  for i in 65 m1.xlarge m1.large.nodisk m1.xlarge.nodisk m1.large m1.medium m1.tiny m1.small; do openstack flavor set --no-property --property hw:mem_page_size=large $i; done
   openstack flavor delete m1.xlarge.nfv
   openstack flavor create --ram 16384 --disk 40 --vcpu 8 --public m1.xlarge.nfv
   openstack flavor set --property hw:cpu_policy=dedicated --property hw:mem_page_size=large --property hw:pci_numa_affinity_policy=preferred m1.xlarge.nfv
