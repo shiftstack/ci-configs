@@ -176,3 +176,4 @@ post_install: |
   fi
   EOF
   (crontab -l 2>/dev/null; echo "*/10 * * * * $HOME/remove_trunks.sh") | crontab -
+  sudo chmod +x $HOME/remove_trunks.sh
