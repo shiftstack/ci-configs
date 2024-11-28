@@ -60,3 +60,14 @@ post_install: |
   sudo podman create --net=host --name=squid --volume /home/stack/squid/squid.conf:/etc/squid/squid.conf:z --volume /home/stack/squid/htpasswd:/etc/squid/htpasswd:z quay.io/emilien/squid:latest
   sudo podman generate systemd --name squid | sudo tee -a /etc/systemd/system/container-squid.service
   sudo systemctl enable --now container-squid
+  git clone https://github.com/shiftstack/shiftstack-ci
+  cd shiftstack-ci
+  export OS_CLOUD=openshift
+  ./refresh_rhcos.sh -b 4.17
+  openstack image set --name rhcos-4.17-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.17
+  ./refresh_rhcos.sh -b 4.18
+  openstack image set --name rhcos-4.18-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.18
+  ./refresh_rhcos.sh -b 4.19
+  openstack image set --name rhcos-4.19-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.19
+  ./refresh_rhcos.sh -b 4.19
+  openstack image set --name rhcos-latest-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.19
