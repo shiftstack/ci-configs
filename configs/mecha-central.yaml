@@ -15,8 +15,6 @@ ephemeral_storage_devices:
   - /dev/disk/by-path/pci-0000:45:00.0-ata-4 # 894.3 GiB
 swiftoperator_enabled: false
 rhsm_enabled: true
-hostonly_fip_pool_start: 192.168.25.10
-hostonly_v6_fip_pool_start: 2001:db8::10
 enabled_services:
   - /usr/share/openstack-tripleo-heat-templates/environments/disable-swift.yaml
 # OpenStack API runnings under WSGI have a common function to calculate the number of workers:
@@ -30,13 +28,28 @@ enabled_services:
 standalone_extra_config:
   # This stopped working for some reason, we need to debug
   octavia::wsgi::apache:workers: 4
+neutron_bridge_mappings: hostonly:br-hostonly,external:br-ex
+neutron_flat_networks: hostonly,external
+hostonly_v6_cidr: "fd2e:6f44:5dd8:c956::/64"
+neutron_mtu: 1450
+ctlplane_mtu: 1500
+hostonly_mtu: 1500
+public_mtu: 1500
 extra_heat_params:
+  CinderRbdFlattenVolumeFromSnapshot: true
   ExtraFirewallRules:
     '168 allow squid':
       dport: 3128
       proto: tcp
       action: insert
-  CinderRbdFlattenVolumeFromSnapshot: true
+    '169 allow openstack-proxy':
+      dport: 13001
+      proto: tcp
+      action: insert
+    '170 allow dnsmasq':
+      dport: 53
+      proto: udp
+      action: insert
   # Turn off debug
   Debug: false
   # But restore debug for the services we care about
@@ -47,11 +60,46 @@ extra_heat_params:
   NovaDebug: true
   ManilaDebug: true
   OctaviaDebug: true
+network_config:
+  - type: ovs_bridge
+    name: br-ctlplane
+    use_dhcp: false
+    ovs_extra:
+    - br-set-external-id br-ctlplane bridge-id br-ctlplane
+    addresses:
+    - ip_netmask: 192.168.24.1/24
+    members:
+    - type: interface
+      name: dummy0
+      nm_controlled: true
+      mtu: 1500
+  - type: ovs_bridge
+    name: br-hostonly
+    use_dhcp: false
+    ovs_extra:
+    - br-set-external-id br-hostonly bridge-id br-hostonly
+    addresses:
+      - ip_netmask: 192.168.25.1/24
+      - ip_netmask: fd2e:6f44:5dd8:c956::1/64
+    members:
+    - type: interface
+      name: dummy1
+      nm_controlled: true
+      mtu: 1500
 post_install: |
   sudo dnf install -y wget
   export OS_CLOUD=standalone
   openstack network set --name external hostonly
   openstack subnet set --name external-subnet hostonly-subnet
+  openstack subnet set --name external-subnet-v6 hostonly-subnet-v6
+  openstack subnet set --dns-nameserver fd2e:6f44:5dd8:c956::1 external-subnet-v6
+  openstack router create --project openshift --tag shiftstack-prune=keep dualstack
+  openstack network create --project openshift --tag shiftstack-prune=keep slaac-network-v6
+  openstack subnet create slaac-v6 --project openshift --tag shiftstack-prune=keep --subnet-range 2001:db8:2222:5555::/64 --network slaac-network-v6 --ip-version 6 --ipv6-ra-mode slaac --ipv6-address-mode slaac
+  openstack subnet create slaac-v4 --project openshift --tag shiftstack-prune=keep --subnet-range 10.197.0.0/16 --network slaac-network-v6
+  openstack router add subnet dualstack slaac-v6
+  openstack router add subnet dualstack slaac-v4
+  openstack router set --external-gateway external dualstack
   openstack network create --external --provider-physical-network external --provider-network-type flat external-proxy
   openstack subnet create external-proxy-subnet --network external-proxy --subnet-range 38.102.83.0/24 --no-dhcp --gateway 38.102.83.1 --allocation-pool "start=38.102.83.81,end=38.102.83.81" --allocation-pool "start=38.102.83.91,end=38.102.83.91" --allocation-pool "start=38.102.83.10,end=38.102.83.10" --allocation-pool "start=38.102.83.78,end="38.102.83.78 --allocation-pool "start=38.102.83.72,end=38.102.83.72" --allocation-pool "start=38.102.83.33,end=38.102.83.33" --allocation-pool "start=38.102.83.105,end=38.102.83.105" --allocation-pool "start=38.102.83.52,end=38.102.83.52"
   openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 centos9-stream && rm -f CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2
@@ -60,6 +108,29 @@ post_install: |
   sudo podman create --net=host --name=squid --volume /home/stack/squid/squid.conf:/etc/squid/squid.conf:z --volume /home/stack/squid/htpasswd:/etc/squid/htpasswd:z quay.io/emilien/squid:latest
   sudo podman generate systemd --name squid | sudo tee -a /etc/systemd/system/container-squid.service
   sudo systemctl enable --now container-squid
+  sudo wget -O /usr/sbin/openstack-proxy https://github.com/pierreprinetti/openstack-proxy/releases/download/v2.1.1/openstack-proxy
+  sudo chmod +x /usr/sbin/openstack-proxy
+  sudo tee /etc/systemd/system/openstack-proxy.service << EOF > /dev/null
+  [Unit]
+  Description=openstack-proxy service
+  After=network-online.target
+  [Service]
+  ExecStart=/usr/sbin/openstack-proxy --url https://[fd2e:6f44:5dd8:c956::1]:13001 --cert /etc/pki/tls/private/overcloud_endpoint.pem --key /etc/pki/tls/private/overcloud_endpoint.pem
+  Environment="OS_CLOUD=openstack" "OS_CLIENT_CONFIG_FILE=/home/stack/.config/openstack/clouds.yaml"
+  [Install]
+  WantedBy=multi-user.target
+  EOF
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now openstack-proxy
+  sudo dnf install -y dnsmasq
+  sudo tee /etc/dnsmasq.conf << EOF > /dev/null
+  port=53
+  user=dnsmasq
+  group=dnsmasq
+  bind-interfaces
+  interface=br-hostonly
+  EOF
+  sudo systemctl enable --now dnsmasq
   git clone https://github.com/shiftstack/shiftstack-ci
   cd shiftstack-ci
   export OS_CLOUD=openshift
