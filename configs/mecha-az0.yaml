@@ -26,8 +26,7 @@ enabled_services:
 # consumes a lot of load balancers and Octavia is using more than half of the RAM available on the host
 # so we decided to reduce the number of workers to reduce the amount of RAM that will be consumed.
 standalone_extra_config:
-  # This stopped working for some reason, we need to debug
-  octavia::wsgi::apache:workers: 4
+  octavia::wsgi::apache::workers: 4
 neutron_bridge_mappings: hostonly:br-hostonly,external:br-ex
 neutron_flat_networks: hostonly,external
 hostonly_v6_cidr: "fd2e:6f44:5dd8:c956::/64"
