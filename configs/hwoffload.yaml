@@ -101,7 +101,7 @@ post_install: |
   After=network-online.target
   [Service]
   ExecStart=/usr/sbin/openstack-proxy --url https://[fd2e:6f44:5dd8:c956::1]:13001 --cert /etc/pki/tls/private/overcloud_endpoint.pem --key /etc/pki/tls/private/overcloud_endpoint.pem
-  Environment="OS_CLOUD=openstack" "OS_CLIENT_CONFIG_FILE=/home/stack/clouds.yaml"
+  Environment="OS_CLOUD=openshift" "OS_CLIENT_CONFIG_FILE=/home/stack/clouds.yaml"
   [Install]
   WantedBy=multi-user.target
   EOF
