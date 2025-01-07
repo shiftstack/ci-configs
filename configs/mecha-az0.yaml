@@ -26,8 +26,7 @@ enabled_services:
 # consumes a lot of load balancers and Octavia is using more than half of the RAM available on the host
 # so we decided to reduce the number of workers to reduce the amount of RAM that will be consumed.
 standalone_extra_config:
-  # This stopped working for some reason, we need to debug
-  octavia::wsgi::apache:workers: 4
+  octavia::wsgi::apache::workers: 4
 neutron_bridge_mappings: hostonly:br-hostonly,external:br-ex
 neutron_flat_networks: hostonly,external
 hostonly_v6_cidr: "fd2e:6f44:5dd8:c956::/64"
@@ -116,7 +115,7 @@ post_install: |
   After=network-online.target
   [Service]
   ExecStart=/usr/sbin/openstack-proxy --url https://[fd2e:6f44:5dd8:c956::1]:13001 --cert /etc/pki/tls/private/overcloud_endpoint.pem --key /etc/pki/tls/private/overcloud_endpoint.pem
-  Environment="OS_CLOUD=openstack" "OS_CLIENT_CONFIG_FILE=/home/stack/.config/openstack/clouds.yaml"
+  Environment="OS_CLOUD=openshift" "OS_CLIENT_CONFIG_FILE=/home/stack/.config/openstack/clouds.yaml"
   [Install]
   WantedBy=multi-user.target
   EOF
