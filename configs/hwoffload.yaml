@@ -1,23 +1,34 @@
 clouddomain: ci.vexxhost.ca
+manila_enabled: true
 ceph_devices:
-  # 894.3 GiB total for Cinder
+  # 894.3 GiB total for Cinder and Manila
   - /dev/disk/by-path/pci-0000:46:00.0-ata-3 # 894.3 GiB
-ephemeral_storage_devices:
-  # 1.1 TiB total for Nova instances
-  - /dev/disk/by-path/pci-0000:46:00.0-ata-2 # 223.6 GiB
-  - /dev/disk/by-path/pci-0000:46:00.0-ata-4 # 894.3 GiB
 # https://bugzilla.redhat.com/show_bug.cgi?id=2235819
 # https://support.vexxhost.com/hc/en-us/requests/364632
 # https://support.vexxhost.com/hc/en-us/requests/364694
 # This is because the system see the disks as removable and Ceph
 # will refuse to use them.
 ceph_devices_to_lvm: true
-swiftoperator_enabled: true
+ephemeral_storage_devices:
+  # 1.1 TiB total for Nova instances
+  - /dev/disk/by-path/pci-0000:46:00.0-ata-2 # 223.6 GiB
+  - /dev/disk/by-path/pci-0000:46:00.0-ata-4 # 894.3 GiB
+swiftoperator_enabled: false
 rhsm_enabled: true
+enabled_services:
+  - /usr/share/openstack-tripleo-heat-templates/environments/disable-swift.yaml
+# OpenStack API runnings under WSGI have a common function to calculate the number of workers:
+# The value for os_workers is max between '(<# processors> / 2)' and '2' with
+# a cap of 12.
+# https://opendev.org/openstack/puppet-openstacklib/src/commit/495701901eabb24d28f2a2276275e1c1537133c1/lib/facter/os_workers.rb#L37-L38
+# On vexxhost machines, we have 96 cores, so each API can create up to 12 workers.
+# This has been problematic for us when deploying OpenShift with Kuryr which
+# consumes a lot of load balancers and Octavia is using more than half of the RAM available on the host
+# so we decided to reduce the number of workers to reduce the amount of RAM that will be consumed.
 standalone_extra_config:
   octavia::wsgi::apache::workers: 4
-neutron_bridge_mappings: hostonly:br-hostonly
-neutron_flat_networks: hostonly
+neutron_bridge_mappings: hostonly:br-hostonly,external:br-ex
+neutron_flat_networks: hostonly,external
 hostonly_v6_cidr: "fd2e:6f44:5dd8:c956::/64"
 neutron_mtu: 1450
 ctlplane_mtu: 1500
@@ -38,6 +49,7 @@ extra_heat_params:
       dport: 53
       proto: udp
       action: insert
+  # Turn off debug
   Debug: false
   # But restore debug for the services we care about
   CinderDebug: true
@@ -87,8 +99,10 @@ post_install: |
   openstack router add subnet dualstack slaac-v6
   openstack router add subnet dualstack slaac-v4
   openstack router set --external-gateway external dualstack
-  openstack flavor create --ram 16384 --disk 40 --vcpu 4 --public m1.xlarge.2
+  openstack network create --external --provider-physical-network external --provider-network-type flat external-proxy
+  openstack subnet create external-proxy-subnet --network external-proxy --subnet-range 38.102.83.0/24 --no-dhcp --gateway 38.102.83.1 --allocation-pool "start=38.102.83.70,end=38.102.83.70" --allocation-pool "start=38.102.83.67,end=38.102.83.67" --allocation-pool "start=38.102.83.110,end=38.102.83.110" --allocation-pool "start=38.102.83.119,end=38.102.83.119"
   openstack image show centos9-stream || wget https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 && openstack image create --public --disk-format qcow2 --file CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2 centos9-stream && rm -f CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2
+  openstack flavor create --ram 16384 --disk 40 --vcpu 4 --ephemeral 10 --public m1.xlarge.2
   openstack quota set --cores 120 --fixed-ips -1 --injected-file-size -1 --injected-files -1 --instances -1 --key-pairs -1 --properties -1 --ram 450000 --gigabytes 4000 --server-groups -1 --server-group-members -1 --backups -1 --backup-gigabytes -1 --per-volume-gigabytes -1 --snapshots -1 --volumes -1 --floating-ips 80 --secgroup-rules -1 --secgroups -1 --networks -1 --subnets -1 --ports -1 --routers -1 --rbac-policies -1 --subnetpools -1 openshift
   sudo podman create --net=host --name=squid --volume /home/stack/squid/squid.conf:/etc/squid/squid.conf:z --volume /home/stack/squid/htpasswd:/etc/squid/htpasswd:z quay.io/emilien/squid:latest
   sudo podman generate systemd --name squid | sudo tee -a /etc/systemd/system/container-squid.service
@@ -101,7 +115,7 @@ post_install: |
   After=network-online.target
   [Service]
   ExecStart=/usr/sbin/openstack-proxy --url https://[fd2e:6f44:5dd8:c956::1]:13001 --cert /etc/pki/tls/private/overcloud_endpoint.pem --key /etc/pki/tls/private/overcloud_endpoint.pem
-  Environment="OS_CLOUD=openshift" "OS_CLIENT_CONFIG_FILE=/home/stack/clouds.yaml"
+  Environment="OS_CLOUD=openshift" "OS_CLIENT_CONFIG_FILE=/home/stack/.config/openstack/clouds.yaml"
   [Install]
   WantedBy=multi-user.target
   EOF
@@ -116,3 +130,14 @@ post_install: |
   interface=br-hostonly
   EOF
   sudo systemctl enable --now dnsmasq
+  git clone https://github.com/shiftstack/shiftstack-ci
+  cd shiftstack-ci
+  export OS_CLOUD=openshift
+  ./refresh_rhcos.sh -b 4.17
+  openstack image set --name rhcos-4.17-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.17
+  ./refresh_rhcos.sh -b 4.18
+  openstack image set --name rhcos-4.18-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.18
+  ./refresh_rhcos.sh -b 4.19
+  openstack image set --name rhcos-4.19-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.19
+  ./refresh_rhcos.sh -b 4.19
+  openstack image set --name rhcos-latest-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.19
