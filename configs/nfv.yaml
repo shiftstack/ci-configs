@@ -159,3 +159,34 @@ post_install: |
   openstack image set --name rhcos-4.20-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.20
   ./refresh_rhcos.sh -b 4.20
   openstack image set --name rhcos-latest-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.20
+  tee /home/stack/remove_trunks.sh << EOF > /dev/null
+  #!/bin/bash
+  set -e
+
+  export OS_CLOUD=openshift
+
+  # Trunks number counter
+  TRUNKS=0
+
+  # Get Galera container id
+  DB_CONTAINER=\`sudo podman ps | awk '/galera/ { print \$1 }'\`
+
+  for i in \`openstack network trunk list -f json | jq -r .[].'ID'\`
+  do
+    RESOURCE_TTL=\$(((\$(date "+%s") - \$(date -d \`openstack network trunk show \$i -f json | jq -r .created_at\` "+%s")) / 3600))
+    if [ \$RESOURCE_TTL -gt 8 ] # Resources TTL older than 8 hours are going to be deleted
+    then
+          : \$((TRUNKS++))
+          sudo podman exec -it \$DB_CONTAINER mysql -e "DELETE FROM ovs_neutron.trunks WHERE id='\${i}';"
+    fi
+  done
+
+  # Slack report
+  if [ \$TRUNKS -gt 0 ]
+  then
+    MESSAGE="remove_trunks script has removed "\${TRUNKS}" network trunk resources from the openstack-nfv DB"
+    curl -X POST -H 'Content-type: application/json' --data '{"text": "'"\${MESSAGE}"'"}' https://hooks.slack.com/services/${SLACK_HOOKS_TOKEN}
+  fi
+  EOF
+  sudo chmod +x /home/stack/remove_trunks.sh
+  (crontab -l 2>/dev/null; echo "*/10 * * * * /home/stack/remove_trunks.sh") | crontab -
