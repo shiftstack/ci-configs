@@ -143,3 +143,7 @@ post_install: |
   openstack image set --name rhcos-4.20-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.20
   ./refresh_rhcos.sh -b 4.20
   openstack image set --name rhcos-latest-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.20
+  ./refresh_rhcos.sh -b 4.21
+  openstack image set --name rhcos-4.21-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.21
+  ./refresh_rhcos.sh -b 4.22
+  openstack image set --name rhcos-4.22-hcp-nodepool --tag shiftstack-prune=keep rhcos-4.22
