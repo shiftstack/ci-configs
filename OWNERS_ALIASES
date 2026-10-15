@@ -2,13 +2,11 @@
 
 aliases:
   openstack-approvers:
-    - eurijon
     - gryf
     - imatza-rh
     - mandre
     - stephenfin
   openstack-reviewers:
-    - eurijon
     - gryf
     - imatza-rh
     - mandre
